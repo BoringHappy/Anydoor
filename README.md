@@ -1,2 +1,2 @@
 # langpt
-GPT usage by langchain
+- GPT usage by langchain
