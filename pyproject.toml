@@ -1,3 +1,38 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "Anydoor"
+version = "0.0.1"
+dependencies = [
+    "requests>=2",
+    "numpy",
+    "sqlalchemy",
+    "pandas",
+    "psycopg2-binary",
+    "cryptography",
+    "langchain",
+    "langchain-openai",
+    "fastapi",
+]
+requires-python = ">=3.8"
+authors = [{ name = "Demon Finch", email = "yhf2lj@gmail.com" }]
+maintainers = [{ name = "Demon Finch", email = "yhf2lj@gmail.com" }]
+description = "Anydoor Libraries"
+readme = "README.md"
+license = { text = "MIT License" }
+keywords = ["Anydoor"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+]
+
+[project.optional-dependencies]
+cli = ["rich", "click"]
+
+[project.urls]
+Homepage = "https://github.com/veinkr/Anydoor"
+
+[project.scripts]
+spam-cli = "spam:main_cli"
