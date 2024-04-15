@@ -26,4 +26,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-anydoor = "anydoor.utils.secret:Secret.generate"
+anydoor = "anydoor.consoles.application:main"

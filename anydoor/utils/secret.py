@@ -41,11 +41,24 @@ class Secret:
             raise FileNotFoundError(f"Secret {secret_name} not found in {cls.folder}")
 
     @classmethod
-    def add(cls, secret_name: str, secret_value: Dict[str, str]):
+    def add(
+        cls,
+        secret_name: str,
+        secret_value: Dict[str, str] = None,
+        secret_path: str = None,
+    ):
+        print(secret_name, secret_path)
         if not os.path.exists(cls.folder):
             os.makedirs(cls.folder)
-        if isinstance(secret_value, str):
+        if not secret_name:
+            raise ValueError(secret_name)
+        if secret_value and isinstance(secret_value, str):
             secret_value = json.loads(secret_value)
+
+        if secret_path and isinstance(secret_path, str):
+            with open(secret_path, "r") as sf:
+                secret_value = json.load(sf)
+
         passwd_path = cls.get_secret_path(secret_name)
         with open(passwd_path, "wb") as f:
             f.write(cls.encrypt(secret_value))
