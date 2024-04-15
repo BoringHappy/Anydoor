@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from functools import lru_cache
 from typing import Dict
 from cryptography.fernet import Fernet
+from .check import check
 
 
 class Secret:
@@ -17,7 +18,8 @@ class Secret:
     fernet_key = os.environ["FERNET_KEY"]
 
     @classmethod
-    def get_secret_path(cls, secret_name):
+    @check.env("SECRETS_FOLDER")
+    def get_secret_path(cls, secret_name: str):
         return os.path.join(cls.folder, f"{secret_name}.passwd")
 
     @classmethod
@@ -30,7 +32,7 @@ class Secret:
 
     @classmethod
     @lru_cache
-    def get(cls, secret_name):
+    def get(cls, secret_name: str):
         passwd_path = cls.get_secret_path(secret_name)
         if os.path.exists(passwd_path):
             with open(passwd_path, "rb") as f:
@@ -39,10 +41,11 @@ class Secret:
             raise FileNotFoundError(f"Secret {secret_name} not found in {cls.folder}")
 
     @classmethod
-    def add(cls, secret_name, secret_value: Dict[str, str]):
+    def add(cls, secret_name: str, secret_value: Dict[str, str]):
         if not os.path.exists(cls.folder):
             os.makedirs(cls.folder)
-
+        if isinstance(secret_value, str):
+            secret_value = json.loads(secret_value)
         passwd_path = cls.get_secret_path(secret_name)
         with open(passwd_path, "wb") as f:
             f.write(cls.encrypt(secret_value))
@@ -50,23 +53,17 @@ class Secret:
     @classmethod
     @property
     @lru_cache
+    @check.env("FERNET_KEY")
     def fernet(cls):
         with open(cls.fernet_key, "rb") as f:
             return Fernet(f.read())
 
     @classmethod
+    @check.env("FERNET_KEY")
     def generate(cls):
+        if os.path.exists(cls.fernet_key):
+            raise FileExistsError(cls.fernet_key)
+        else:
+            os.makedirs(os.path.dirname(cls.fernet_key))
         with open(cls.fernet_key, "wb") as f:
             f.write(Fernet.generate_key())
-
-
-if __name__ == "__main__":
-    test_secret = {
-        "api_key": "12345",
-        "api_secret": "12345",
-    }
-    Secret.generate()
-    Secret.add("test_sec", test_secret)
-    result = Secret.get("test_sec")
-    print(result)
-    assert result.__dict__ == SimpleNamespace(**test_secret).__dict__
