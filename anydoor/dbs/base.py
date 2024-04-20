@@ -220,3 +220,9 @@ class BaseDB:
         schema: str = None,
     ):
         self.get_table(table=table, schema=schema).insert().values(values)
+
+    def create(
+        self,
+        table: Table,
+    ):
+        table.__table__.create(self.engine, checkfirst=True)
