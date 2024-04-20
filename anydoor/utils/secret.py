@@ -39,13 +39,18 @@ class Secret:
 
     @classmethod
     @lru_cache
-    def get(cls, secret_name: str):
+    def get(cls, secret_name: str, raise_exception=True):
         passwd_path = cls.get_secret_path(secret_name)
         if os.path.exists(passwd_path):
             with open(passwd_path, "rb") as f:
                 return SimpleNamespace(**cls.decrypt(f.read()))
         else:
-            raise FileNotFoundError(f"Secret {secret_name} not found in {cls.folder()}")
+            if raise_exception:
+                raise FileNotFoundError(
+                    f"Secret {secret_name} not found in {cls.folder()}"
+                )
+            else:
+                return
 
     @classmethod
     @lru_cache

@@ -26,6 +26,7 @@ fastapi = "^0.110.1"
 cleo = "^2.1.0"
 pykeepass = "^4.0.7.post1"
 rich = "^13.7.1"
+tenacity = "^8.2.3"
 
 [tool.poetry.group.dev.dependencies]
 tqdm = "^4.66.2"
