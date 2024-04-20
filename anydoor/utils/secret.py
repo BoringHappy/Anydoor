@@ -98,5 +98,5 @@ class Secret:
                 raise FileExistsError(cls.fernet_key())
         else:
             os.makedirs(os.path.dirname(cls.fernet_key()))
-        with open(cls.fernet_key(), "wb") as f:
-            f.write(Fernet.generate_key())
+            with open(cls.fernet_key(), "wb") as f:
+                f.write(Fernet.generate_key())
