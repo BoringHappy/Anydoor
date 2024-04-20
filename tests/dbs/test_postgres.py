@@ -1,0 +1,55 @@
+from anydoor.dbs import Postgres
+from types import SimpleNamespace
+from sqlalchemy import Engine
+import pandas as pd
+
+
+def test_create_engine():
+    engine = Postgres.create_engine(
+        secret=SimpleNamespace(
+            user="postgres",
+            password="<deprecated>",
+            host="127.0.0.1",
+            port=5432,
+        ),
+        database="postgres",
+        schema="public",
+    )
+
+    assert isinstance(engine, Engine)
+
+
+def test_to_sql():
+    schema = "test"
+    table = "test_unit"
+    pg = Postgres(database="postgres", schema=schema, secret_name="postgres")
+
+    sample_data = [["Alex", 11, 120.5], ["Bob", 12, 153.7], ["Clarke", 13, 165.0]]
+    df = pd.DataFrame(sample_data, columns=["Name", "Age", "Weight"])
+    pg.to_sql(
+        df=df,
+        schema=schema,
+        table=table,
+        primary_keys=["Name"],
+    )
+    df2 = pg.execute(f"select * from {schema}.{table}")
+    assert df2.shape == (3, 3)
+    assert set(df2["Name"].to_list()) == set(["Alex", "Bob", "Clarke"])
+    assert set(df2["Age"].to_list()) == set([11, 12, 13])
+
+    increment_data = [["Alex", 11, 120.5], ["Bob", 13, 153.7], ["Smith", 15, 165.0]]
+    pg.to_sql(
+        df=pd.DataFrame(increment_data, columns=["Name", "Age", "Weight"]),
+        schema=schema,
+        table=table,
+        primary_keys=["Name"],
+    )
+    increment_df = pg.execute(f"select * from {schema}.{table}")
+    assert increment_df.shape == (4, 3)
+    assert set(increment_df["Name"].to_list()) == set(
+        ["Alex", "Bob", "Clarke", "Smith"]
+    )
+    assert set(increment_df["Age"].to_list()) == set([11, 13, 15])
+
+    pg.truncate(table=table, schema=schema)
+    pg.execute(f"drop table  {schema}.{table}")
