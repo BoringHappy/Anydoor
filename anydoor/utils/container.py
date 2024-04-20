@@ -1,9 +1,12 @@
 import os
 
 
-def is_docker():
-    return os.path.exists("/.dockerenv")
+class Container:
 
+    @classmethod
+    def is_docker(cls):
+        return os.path.exists("/.dockerenv")
 
-def is_pod():
-    return bool([i for i in os.environ.keys() if i.startswith("KUBERNETES")])
+    @classmethod
+    def is_pod(cls):
+        return bool([i for i in os.environ.keys() if i.startswith("KUBERNETES")])
