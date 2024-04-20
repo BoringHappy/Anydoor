@@ -14,13 +14,20 @@ from .check import check
 
 
 class Secret:
-    folder = os.environ["SECRETS_FOLDER"]
-    fernet_key = os.environ["FERNET_KEY"]
 
     @classmethod
     @check.env("SECRETS_FOLDER")
+    def folder(cls):
+        return os.environ["SECRETS_FOLDER"]
+
+    @classmethod
+    @check.env("FERNET_KEY")
+    def fernet_key(cls):
+        return os.environ["FERNET_KEY"]
+
+    @classmethod
     def get_secret_path(cls, secret_name: str):
-        return os.path.join(cls.folder, f"{secret_name}.passwd")
+        return os.path.join(cls.folder(), f"{secret_name}.passwd")
 
     @classmethod
     def encrypt(cls, secret_value: Dict[str, str]):
@@ -38,7 +45,16 @@ class Secret:
             with open(passwd_path, "rb") as f:
                 return SimpleNamespace(**cls.decrypt(f.read()))
         else:
-            raise FileNotFoundError(f"Secret {secret_name} not found in {cls.folder}")
+            raise FileNotFoundError(f"Secret {secret_name} not found in {cls.folder()}")
+
+    @classmethod
+    @lru_cache
+    def delete(cls, secret_name: str):
+        passwd_path = cls.get_secret_path(secret_name)
+        if os.path.exists(passwd_path):
+            os.remove(passwd_path)
+        else:
+            raise FileNotFoundError(passwd_path)
 
     @classmethod
     def add(
@@ -48,8 +64,8 @@ class Secret:
         secret_path: str = None,
     ):
         print(secret_name, secret_path)
-        if not os.path.exists(cls.folder):
-            os.makedirs(cls.folder)
+        if not os.path.exists(cls.folder()):
+            os.makedirs(cls.folder())
         if not secret_name:
             raise ValueError(secret_name)
         if secret_value and isinstance(secret_value, str):
@@ -68,15 +84,19 @@ class Secret:
     @lru_cache
     @check.env("FERNET_KEY")
     def fernet(cls):
-        with open(cls.fernet_key, "rb") as f:
+        with open(cls.fernet_key(), "rb") as f:
             return Fernet(f.read())
 
     @classmethod
     @check.env("FERNET_KEY")
-    def generate(cls):
-        if os.path.exists(cls.fernet_key):
-            raise FileExistsError(cls.fernet_key)
+    def generate(cls, exist_ok=False):
+        if os.path.exists(cls.fernet_key()):
+            if exist_ok:
+                print(f"{cls.fernet_key()} exists")
+                return
+            else:
+                raise FileExistsError(cls.fernet_key())
         else:
-            os.makedirs(os.path.dirname(cls.fernet_key))
-        with open(cls.fernet_key, "wb") as f:
+            os.makedirs(os.path.dirname(cls.fernet_key()))
+        with open(cls.fernet_key(), "wb") as f:
             f.write(Fernet.generate_key())

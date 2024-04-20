@@ -1,12 +1,11 @@
-import os
+# import os
 
-os.environ["SECRETS_FOLDER"] = os.path.join(os.path.dirname(__file__), ".secret")
-os.environ["FERNET_KEY"] = os.path.join(
-    os.path.dirname(__file__), ".secret", "frenet_key"
-)
+# os.environ["SECRETS_FOLDER"] = os.path.join(os.path.dirname(__file__), ".secret")
+# os.environ["FERNET_KEY"] = os.path.join(
+#     os.path.dirname(__file__), ".secret", "frenet_key"
+# )
 from anydoor.utils import Secret
 from types import SimpleNamespace
-import shutil
 
 
 def test_secret():
@@ -14,9 +13,8 @@ def test_secret():
         "api_key": "12345",
         "api_secret": "12345",
     }
-    Secret.generate()
+    Secret.generate(exist_ok=True)
     Secret.add("test_sec", test_secret)
     result = Secret.get("test_sec")
     assert result.__dict__ == SimpleNamespace(**test_secret).__dict__
-
-    shutil.rmtree(os.environ["SECRETS_FOLDER"])
+    Secret.delete("test_sec")

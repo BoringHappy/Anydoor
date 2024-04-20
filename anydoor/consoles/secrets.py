@@ -11,12 +11,6 @@ class SecretCommand(Command):
     ]
     options = [
         option(
-            "yell",
-            "y",
-            description="If set, the task will yell in uppercase letters",
-            flag=True,
-        ),
-        option(
             "name",
             description="secret name",
             default=None,
