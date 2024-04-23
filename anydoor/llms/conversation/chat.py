@@ -16,10 +16,10 @@ import sys
 class Chat:
     cost = Costs()
 
-    def __init__(self, verbose=False) -> None:
+    def __init__(self, mode="gpt-3.5-turbo", verbose=False) -> None:
         llm = ChatOpenAI(
             temperature=0,
-            model="gpt-4-0125-preview",
+            model=mode,
         )
 
         self.conversation = ConversationChain(
@@ -42,6 +42,22 @@ class Chat:
         file_path = human_input.replace("$file:", "").strip()
         self.print(f"[green]Loaded[/green]: {file_path}")
 
+    def save(self, human_input):
+        file_path = human_input.replace("$save:", "").strip()
+        self.print(f"[green]Save to[/green]: {file_path}")
+
+    def cmd(self, human_input):
+        if human_input.startswith("$exit"):
+            self.exit()
+        elif human_input.startswith("$cost"):
+            rprint(self.cost.costs)
+        elif human_input.startswith("$file:"):
+            self.add_file(human_input)
+        elif human_input.startswith("$save:"):
+            self.save(human_input)
+        else:
+            rprint("[red]Nothing Happen[red]")
+
     @retry(
         reraise=True,
         stop=stop_after_attempt(3),
@@ -52,14 +68,6 @@ class Chat:
         response = self.conversation.invoke(input=human_input)
         self.responses.append(response)
         return response
-
-    def cmd(self, human_input):
-        if human_input.startswith("$exit"):
-            self.exit()
-        elif human_input.startswith("$cost"):
-            rprint(self.cost.costs)
-        elif human_input.startswith("$file:"):
-            self.add_file(human_input)
 
     def chat_cli(self):
         while True:
@@ -75,6 +83,6 @@ class Chat:
                 self.cmd(human_input)
                 continue
             else:
-                result = self.chat(human_input=human_input)
                 self.print("GPT:", style="magenta")
+                result = self.chat(human_input=human_input)
                 self.print(Markdown(result.get("response")))
