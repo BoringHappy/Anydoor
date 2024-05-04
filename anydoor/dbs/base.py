@@ -25,18 +25,19 @@ class BaseDB:
         engine: Engine = None,
         create_engine_options=dict(),
     ):
+        self.database = database
         self.schema = schema or self.default_schema
         self.secret = secret or Secret.get(secret_name)
         self.engine = engine or self.create_engine(
             secret=self.secret,
-            database=database,
+            database=self.database,
             schema=self.schema,
             **create_engine_options,
         )
 
     @classmethod
     def create_engine(
-        self, secret: SimpleNamespace, database, schema, **kwargs
+        self, secret: SimpleNamespace, database, schema, *args, **kwargs
     ) -> Engine: ...
 
     @classmethod

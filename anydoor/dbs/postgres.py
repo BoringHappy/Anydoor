@@ -51,7 +51,7 @@ class Postgres(BaseDB):
 
     @classmethod
     def create_engine(
-        cls, secret: SimpleNamespace, database, schema, **kwargs
+        cls, secret: SimpleNamespace, database, schema, *args, **kwargs
     ) -> Engine:
         """postgresql sqlalchemy engine"""
         if schema:
