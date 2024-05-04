@@ -27,6 +27,7 @@ cleo = "^2.1.0"
 pykeepass = "^4.0.7.post1"
 rich = "^13.7.1"
 tenacity = "^8.2.3"
+colorama = "^0.4.6"
 
 [tool.poetry.group.dev.dependencies]
 tqdm = "^4.66.2"

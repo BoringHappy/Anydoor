@@ -5,6 +5,7 @@ from .proxy import Proxy
 from .container import Container
 from .singleton import SingletonType
 from .time import TimeUtils
+from .log import logger
 
 __all__ = [
     "check",
@@ -14,4 +15,5 @@ __all__ = [
     "Container",
     "SingletonType",
     "TimeUtils",
+    "logger",
 ]
