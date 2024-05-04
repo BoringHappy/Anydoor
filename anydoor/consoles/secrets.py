@@ -1,6 +1,6 @@
 from cleo.commands.command import Command
 from cleo.helpers import argument, option
-from anydoor.utils import Secret
+from anydoor.utils import Secret, logger
 
 
 class SecretCommand(Command):
@@ -34,9 +34,10 @@ class SecretCommand(Command):
         action = self.argument("action")
         if action == "get":
             sec = Secret.get(self.option("name"))
-            print(sec)
-
+            self.line(f"{sec}")
         elif action == "add":
             Secret.add(secret_name=self.option("name"), secret_path=self.option("path"))
+        elif action == "list":
+            Secret.list()
 
-        self.line("<info>Success</info>")
+        self.line("Success", "info")

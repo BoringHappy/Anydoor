@@ -11,6 +11,10 @@ from functools import lru_cache
 from typing import Dict
 from cryptography.fernet import Fernet
 from .check import check
+from .log import logger
+
+
+class SingleSecret(SimpleNamespace): ...
 
 
 class Secret:
@@ -39,11 +43,18 @@ class Secret:
 
     @classmethod
     @lru_cache
+    def list(cls):
+        for file in os.listdir(cls.folder()):
+            if file.endswith(".passwd"):
+                logger.info(f"{file}")
+
+    @classmethod
+    @lru_cache
     def get(cls, secret_name: str, raise_exception=True):
         passwd_path = cls.get_secret_path(secret_name)
         if os.path.exists(passwd_path):
             with open(passwd_path, "rb") as f:
-                return SimpleNamespace(**cls.decrypt(f.read()))
+                return SingleSecret(**cls.decrypt(f.read()))
         else:
             if raise_exception:
                 raise FileNotFoundError(
