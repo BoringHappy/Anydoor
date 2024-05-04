@@ -6,6 +6,7 @@
 # )
 from anydoor.utils import Secret
 from types import SimpleNamespace
+import os
 
 
 def test_secret():
@@ -13,7 +14,7 @@ def test_secret():
         "api_key": "12345",
         "api_secret": "12345",
     }
-    Secret.generate(exist_ok=True)
+    # os.environ["FERNET_KEY"] = Secret.generate()
     Secret.add("test_sec", test_secret)
     result = Secret.get("test_sec")
     assert result.__dict__ == SimpleNamespace(**test_secret).__dict__

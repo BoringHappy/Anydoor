@@ -19,15 +19,9 @@ class SingleSecret(SimpleNamespace): ...
 
 class Secret:
 
-    @classmethod
-    @check.env("SECRETS_FOLDER")
-    def folder(cls):
+    @staticmethod
+    def folder():
         return os.environ["SECRETS_FOLDER"]
-
-    @classmethod
-    @check.env("FERNET_KEY")
-    def fernet_key(cls):
-        return os.environ["FERNET_KEY"]
 
     @classmethod
     def get_secret_path(cls, secret_name: str):
@@ -35,11 +29,11 @@ class Secret:
 
     @classmethod
     def encrypt(cls, secret_value: Dict[str, str]):
-        return cls.fernet.encrypt(json.dumps(secret_value).encode("utf-8"))
+        return cls.fernet().encrypt(json.dumps(secret_value).encode("utf-8"))
 
     @classmethod
     def decrypt(cls, secret_value: str):
-        return json.loads(cls.fernet.decrypt(secret_value).decode("utf-8"))
+        return json.loads(cls.fernet().decrypt(secret_value).decode("utf-8"))
 
     @classmethod
     @lru_cache
@@ -95,24 +89,10 @@ class Secret:
         with open(passwd_path, "wb") as f:
             f.write(cls.encrypt(secret_value))
 
-    @classmethod
-    @property
-    @lru_cache
-    @check.env("FERNET_KEY")
-    def fernet(cls):
-        with open(cls.fernet_key(), "rb") as f:
-            return Fernet(f.read())
+    @staticmethod
+    def fernet():
+        return Fernet(os.environ["FERNET_KEY"])
 
-    @classmethod
-    @check.env("FERNET_KEY")
-    def generate(cls, exist_ok=False):
-        if os.path.exists(cls.fernet_key()):
-            if exist_ok:
-                print(f"{cls.fernet_key()} exists")
-                return
-            else:
-                raise FileExistsError(cls.fernet_key())
-        else:
-            os.makedirs(os.path.dirname(cls.fernet_key()))
-            with open(cls.fernet_key(), "wb") as f:
-                f.write(Fernet.generate_key())
+    @staticmethod
+    def generate():
+        return Fernet.generate_key().decode()
