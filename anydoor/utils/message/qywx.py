@@ -13,37 +13,26 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from anydoor.utils import Secret
 from anydoor.utils.singleton import SingletonType
 from requests import Response
+from .base import BaseMsg
+from anydoor.utils import logger
 
 
-class UserError(Exception): ...
-
-
-class msgqywx(metaclass=SingletonType):
+class msgqywx(BaseMsg):
     url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken"
     sec_temp_name = "qywx_access_token"
+    PASSWD_NAME_ENV = "QYWX_PASSWD_NAME"
 
-    def __init__(self, secret_name: str):
-        secret = Secret.get(secret_name)
-        self.corpid = secret.corp_id
-        self.corpsecret = secret.corp_secret
-        self.agentid = secret.agent_id
-        self.touser = secret.user
-        self.secret_key_md5 = md5(
-            (self.corpid + self.corpsecret).encode(encoding="utf-8")
-        ).hexdigest()
-        self.base_config_folder = f"{os.path.expanduser('~')}/.config/msgqywx"
-        if not os.path.exists(self.base_config_folder):
-            os.makedirs(self.base_config_folder)
-        self.access_conf_file = os.path.join(
-            self.base_config_folder, f"{self.secret_key_md5}.conf"
-        )
-
-    def access_token_to_jsonfile(self):
+    @retry(
+        reraise=True,
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=20),
+    )
+    def get_access_token_from_wx(self):
         response = requests.post(
             self.url,
             params={
-                "corpid": self.corpid,
-                "corpsecret": self.corpsecret,
+                "corpid": self.secret.corp_id,
+                "corpsecret": self.secret.corp_secret,
             },
         )
         if response.ok:
@@ -60,20 +49,17 @@ class msgqywx(metaclass=SingletonType):
     def get_access_token(self):
         access_json = Secret.get(self.sec_temp_name, raise_exception=False)
         if access_json:
-            if access_json.get("expire_time", 0) > datetime.now().timestamp():
-                return access_json["access_token"]
-        return self.access_token_to_jsonfile()
+            if access_json.expire_time > datetime.now().timestamp():
+                return access_json.access_token
+        return self.get_access_token_from_wx()
 
     @retry(
         reraise=True,
-        stop=stop_after_attempt(7),
-        wait=wait_exponential(multiplier=1, min=4, max=20),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=20),
     )
     def send(
-        self,
-        message,
-        msgtype: str = "text",
-        raise_error: bool = False,
+        self, message: str, msgtype: str = "text", raise_exception=False
     ) -> Response:
         """
         send_msg发送文本类消息
@@ -83,22 +69,22 @@ class msgqywx(metaclass=SingletonType):
         :param touser: 发送用户，和初始化类时的touser不能同时为None
         :return: 微信返回的response，可以自行处理错误信息，也可不处理
         """
-        if msgtype not in ["text", "markdown"]:
-            raise TypeError(
-                "Unsupported msgtype, only `text` and `markdown` are acceptable"
-            )
+        assert msgtype in ["text", "markdown"], TypeError()
 
         send_url = f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={self.get_access_token()}"
 
         payload = {
-            "touser": self.touser,
-            "agentid": self.agentid,
+            "touser": self.secret.user,
+            "agentid": self.secret.agent_id,
             "msgtype": msgtype,
             msgtype: {"content": message},
         }
 
         response = requests.post(send_url, json=payload)
-        if not response.ok and raise_error:
-            response.raise_for_status()
-        else:
+        if not response.ok:
             return response
+        else:
+            if raise_exception:
+                response.raise_for_status()
+            else:
+                logger.exception(f"{__class__}{response.status_code}")
