@@ -12,6 +12,7 @@ from .base import BaseMsg
 
 class msgfs(BaseMsg):
     BASE_URL = "https://open.feishu.cn/open-apis/bot/v2/hook/"
+    PASSWD_NAME_ENV = "FEISHU_PASSWD_NAME"
 
     @retry(
         reraise=True,
