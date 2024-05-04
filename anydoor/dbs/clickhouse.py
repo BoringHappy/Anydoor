@@ -33,6 +33,25 @@ class Clickhouse(BaseDB):
         )
         return engine
 
+    def to_sql(
+        self,
+        df: pd.DataFrame,
+        table: str,
+        schema: str = None,
+    ):
+        table = table.lower()
+        schema = schema or self.schema
+
+        to_sql_parameters = {
+            "name": table,
+            "schema": schema,
+            "con": self.engine,
+            "index": False,
+            "if_exists": "append",
+            "chunksize": 1000,
+        }
+        df.to_sql(**to_sql_parameters)
+
     def ensure_table(
         self,
         table: str,
@@ -54,24 +73,39 @@ class Clickhouse(BaseDB):
             logger.info(f"create Clickhouse Table: {sql}")
             self.execute(sql)
 
-    def to_sql(
-        self,
-        df: pd.DataFrame,
-        table: str,
-        schema: str = None,
-    ):
-        table = table.lower()
-        schema = schema or self.schema
+    @classmethod
+    def get_df_dtypes(cls, df: pd.DataFrame) -> dict:
+        """Get dtypes of a dataframe"""
+        return {k: cls.get_dtype(v) for k, v in df.dtypes.to_dict().items()}
 
-        to_sql_parameters = {
-            "name": table,
-            "schema": schema,
-            "con": self.engine,
-            "index": False,
-            "if_exists": "append",
-            "chunksize": 1000,
-        }
-        df.to_sql(**to_sql_parameters)
+    @classmethod
+    def get_dtype(cls, dtype: str) -> str:
+        """
+        将 Pandas dtype 转换为 ClickHouse type
+        Args:
+            dtype (str): Pandas dtype
+        Returns:
+            str: ClickHouse type
+        """
+        dtype = str(dtype)
+        if dtype == "object":
+            return "String"
+        elif dtype.startswith("int"):
+            return f"Int{dtype[3:]}"
+        elif dtype.startswith("uint"):
+            return f"UInt{dtype[4:]}"
+        elif dtype.startswith("float"):
+            return f"Float{dtype[5:]}"
+        elif dtype == "bool":
+            return "UInt8"
+        elif dtype.startswith("datetime"):
+            return "DateTime"
+        elif dtype == "timedelta":
+            return "Int64"
+        elif dtype == "category":
+            return "String"
+        else:
+            raise ValueError(f"Invalid dtype '{dtype}'")
 
     def ensure_primary_key(self, *args, **kwargs): ...
     def check_varchar_length(self, *args, **kwargs): ...

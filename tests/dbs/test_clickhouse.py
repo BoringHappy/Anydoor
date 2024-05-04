@@ -1,8 +1,7 @@
 from anydoor.dbs import Clickhouse
-from sqlalchemy import Engine, Table, Column
+from sqlalchemy import Engine
 import pandas as pd
 from types import SimpleNamespace
-from clickhouse_sqlalchemy import types
 
 
 def test_create_engine():
@@ -24,16 +23,16 @@ def test_to_sql():
     schema = "default"
     table = "test_unit"
     ck = Clickhouse(database="default", schema=schema, secret_name="clickhouse")
-    ck.execute(f"drop table  if exists  {schema}.{table}")
-    ck.ensure_table(
-        table=table,
-        schema=schema,
-        dtype={"Name": "String", "Age": "Int64", "Weight": "Float64"},
-        primary_keys=["Name"],
-    )
+    ck.execute(f"drop table if exists {schema}.{table}")
 
     sample_data = [["Alex", 11, 120.5], ["Bob", 12, 153.7], ["Clarke", 13, 165.0]]
     df = pd.DataFrame(sample_data, columns=["Name", "Age", "Weight"])
+    ck.ensure_table(
+        table=table,
+        schema=schema,
+        dtype=ck.get_df_dtypes(df=df),
+        primary_keys=["Name"],
+    )
     ck.to_sql(
         df=df,
         schema=schema,
