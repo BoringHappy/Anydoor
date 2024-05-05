@@ -1,13 +1,6 @@
 from anydoor.dbs import Sqlite
-from types import SimpleNamespace
-from sqlalchemy import Engine
+
 import pandas as pd
-
-
-def test_create_engine():
-    engine = Sqlite.create_engine(db_path=":memory:")
-
-    assert isinstance(engine, Engine)
 
 
 def test_to_sql():

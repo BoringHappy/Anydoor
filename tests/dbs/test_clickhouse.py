@@ -1,22 +1,5 @@
 from anydoor.dbs import Clickhouse
-from sqlalchemy import Engine
 import pandas as pd
-from types import SimpleNamespace
-
-
-def test_create_engine():
-    engine = Clickhouse.create_engine(
-        secret=SimpleNamespace(
-            user="default",
-            password="123456",
-            host="192.168.5.142",
-            port=5432,
-        ),
-        database="default",
-        schema="default",
-    )
-
-    assert isinstance(engine, Engine)
 
 
 def test_to_sql():

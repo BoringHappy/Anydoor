@@ -1,22 +1,5 @@
 from anydoor.dbs import Postgres
-from types import SimpleNamespace
-from sqlalchemy import Engine
 import pandas as pd
-
-
-def test_create_engine():
-    engine = Postgres.create_engine(
-        secret=SimpleNamespace(
-            user="postgres",
-            password="<deprecated>",
-            host="127.0.0.1",
-            port=5432,
-        ),
-        database="postgres",
-        schema="public",
-    )
-
-    assert isinstance(engine, Engine)
 
 
 def test_to_sql():

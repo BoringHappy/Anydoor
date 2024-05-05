@@ -1,12 +1,5 @@
-# import os
-
-# os.environ["SECRETS_FOLDER"] = os.path.join(os.path.dirname(__file__), ".secret")
-# os.environ["FERNET_KEY"] = os.path.join(
-#     os.path.dirname(__file__), ".secret", "frenet_key"
-# )
 from anydoor.utils import Secret
 from types import SimpleNamespace
-import os
 
 
 def test_secret():
