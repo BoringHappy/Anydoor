@@ -1,5 +1,5 @@
 from langchain_community.callbacks import get_openai_callback
-from anydoor.utils.singleton import SingletonType
+from ...utils import SingletonType
 
 
 class Costs(metaclass=SingletonType):

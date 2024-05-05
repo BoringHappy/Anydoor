@@ -32,5 +32,12 @@ class ColorLogger(logging.Logger):
         self.addHandler(console)
 
 
-logging.setLoggerClass(ColorLogger)
+# logging.setLoggerClass(ColorLogger)
 logger = logging.getLogger("anydoor")
+if not logger.hasHandlers():
+    color_formatter = ColorFormatter("%(asctime)-10s %(levelname)-10s %(message)s")
+    console = logging.StreamHandler()
+    console.setFormatter(color_formatter)
+    console.setLevel(logging.INFO)
+    logger.addHandler(console)
+    logger.setLevel(logging.INFO)

@@ -5,8 +5,7 @@ create_time : 2022/1/2 14:04
 author : Demon Finch
 """
 
-from datetime import datetime, date, timedelta
-from typing import Union
+from datetime import date, timedelta
 
 
 class TimeUtils:

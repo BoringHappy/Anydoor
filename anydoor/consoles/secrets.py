@@ -1,6 +1,6 @@
 from cleo.commands.command import Command
 from cleo.helpers import argument, option
-from anydoor.utils import Secret, logger
+from ..utils import Secret, logger
 
 
 class SecretCommand(Command):

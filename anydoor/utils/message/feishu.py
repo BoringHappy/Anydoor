@@ -6,7 +6,6 @@ author : Demon Finch
 """
 import requests
 from tenacity import retry, stop_after_attempt, wait_exponential
-from anydoor.utils import Secret
 from .base import BaseMsg
 
 

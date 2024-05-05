@@ -1,6 +1,6 @@
 from cleo.commands.command import Command
 from cleo.helpers import argument, option
-from anydoor.llms.conversation import Chat
+from ..llms.conversation import Chat
 
 
 class ChatCommand(Command):

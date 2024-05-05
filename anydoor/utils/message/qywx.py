@@ -7,11 +7,9 @@ author : Demon Finch
 import os
 import json
 import requests
-from hashlib import md5
 from datetime import datetime
 from tenacity import retry, stop_after_attempt, wait_exponential
-from anydoor.utils import Secret
-from anydoor.utils.singleton import SingletonType
+from .. import Secret
 from requests import Response
 from .base import BaseMsg
 from anydoor.utils import logger

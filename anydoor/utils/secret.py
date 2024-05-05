@@ -10,7 +10,6 @@ from types import SimpleNamespace
 from functools import lru_cache
 from typing import Dict
 from cryptography.fernet import Fernet
-from .check import check
 from .log import logger
 
 
