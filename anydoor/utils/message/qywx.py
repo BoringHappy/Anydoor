@@ -79,7 +79,7 @@ class msgqywx(BaseMsg):
         }
 
         response = requests.post(send_url, json=payload)
-        if not response.ok:
+        if response.ok:
             return response
         else:
             if raise_exception:
