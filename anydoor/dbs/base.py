@@ -1,12 +1,11 @@
 import pandas as pd
 from datetime import datetime
 from uuid import uuid1
-from anydoor.utils import Secret
+from anydoor.utils import Vault, Secret
 from sqlalchemy.types import DateTime, Float, String, Date, BIGINT, TEXT
 
 from sqlalchemy.sql import text
-from typing import List, Optional, Union
-from types import SimpleNamespace
+from typing import List, Optional
 from sqlalchemy import Engine, inspect, Column, MetaData, Table
 from sqlalchemy.exc import IntegrityError
 
@@ -19,7 +18,7 @@ class BaseDB:
     def __init__(
         self,
         database: str,
-        secret: SimpleNamespace = None,
+        secret: Secret = None,
         secret_name: str = None,
         schema: str = None,
         engine: Engine = None,
@@ -27,7 +26,7 @@ class BaseDB:
     ):
         self.database = database
         self.schema = schema or self.default_schema
-        self.secret = secret or Secret.get(secret_name)
+        self.secret = secret or Vault().get(secret_name)
         self.engine = engine or self.create_engine(
             secret=self.secret,
             database=self.database,
@@ -37,7 +36,7 @@ class BaseDB:
 
     @classmethod
     def create_engine(
-        self, secret: SimpleNamespace, database, schema, *args, **kwargs
+        self, secret: Secret, database, schema, *args, **kwargs
     ) -> Engine: ...
 
     @classmethod

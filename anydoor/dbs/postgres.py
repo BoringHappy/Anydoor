@@ -10,7 +10,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.sql import text
 from functools import partial
 from .base import BaseDB
-from types import SimpleNamespace
+from ..utils import Secret
 
 
 def pgsql_upsert(table, conn, keys, data_iter, on_conflict):
@@ -50,9 +50,7 @@ class Postgres(BaseDB):
     default_schema = "public"
 
     @classmethod
-    def create_engine(
-        cls, secret: SimpleNamespace, database, schema, *args, **kwargs
-    ) -> Engine:
+    def create_engine(cls, secret: Secret, database, schema, *args, **kwargs) -> Engine:
         """postgresql sqlalchemy engine"""
         if schema:
             kwargs["connect_args"] = {"options": f"-csearch_path={schema}"}

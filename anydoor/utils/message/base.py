@@ -1,6 +1,5 @@
 import os
-from types import SimpleNamespace
-from .. import Secret, SingletonType
+from .. import Vault, SingletonType, Secret
 
 
 class UserError(Exception): ...
@@ -9,7 +8,7 @@ class UserError(Exception): ...
 class BaseMsg(metaclass=SingletonType):
     PASSWD_NAME_ENV = None
 
-    def __init__(self, secret_name: str = None, secret: SimpleNamespace = None):
+    def __init__(self, secret_name: str = None, secret: Secret = None):
         if (
             secret is None
             and secret_name is None
@@ -18,10 +17,15 @@ class BaseMsg(metaclass=SingletonType):
             raise ValueError(
                 f"secret or secret_name or QYWX_PASSWD_NAME can be none in same time"
             )
-        self.secret = (
-            secret
-            or Secret.get(secret_name, raise_exception=False)
-            or Secret.get(os.environ[self.PASSWD_NAME_ENV])
+        self.secret_instance = secret
+        self.secret_name = secret_name
+
+    @property
+    def secret(self):
+        return (
+            self.secret_instance
+            or Vault().get(self.secret_name, raise_exception=False)
+            or Vault().get(os.environ[self.PASSWD_NAME_ENV])
         )
 
     def send(self, message: str, msgtype: str = "text", raise_exception=False): ...

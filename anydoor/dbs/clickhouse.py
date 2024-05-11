@@ -5,14 +5,11 @@ create_time : 2021/12/29 19:30
 author : Demon Finch
 """
 
-from sqlalchemy import MetaData, create_engine, Table, Engine
-from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.sql import text
-from functools import partial
+from sqlalchemy import create_engine, Engine
+
 from .base import BaseDB
-from types import SimpleNamespace
 import pandas as pd
-from anydoor.utils import logger
+from anydoor.utils import logger, Secret
 
 
 class Clickhouse(BaseDB):
@@ -24,9 +21,7 @@ class Clickhouse(BaseDB):
         self.schema = self.database
 
     @classmethod
-    def create_engine(
-        cls, secret: SimpleNamespace, database, schema, *args, **kwargs
-    ) -> Engine:
+    def create_engine(cls, secret: Secret, database, schema, *args, **kwargs) -> Engine:
         engine = create_engine(
             f"clickhouse+native://{secret.user}:{secret.password}@{secret.host}:{secret.port}/{database}",
             **kwargs,

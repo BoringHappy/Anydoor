@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "anydoor"
-version = "0.1.1"
+version = "0.1.2"
 description = "Anydoor to any cozy functions and classes. Suitable for data and llm"
 authors = ["veinkr <yhf2lj@gmail.com>"]
 readme = "README.md"
@@ -28,11 +28,13 @@ rich = "^13.7.1"
 tenacity = "^8.2.3"
 colorama = "^0.4.6"
 clickhouse-sqlalchemy = "^0.3.1"
+hvac = "^2.2.0"
 
 [tool.poetry.group.dev.dependencies]
 tqdm = "^4.66.2"
 pytest = "^8.1.1"
 pytest-xdist = "^3.6.0"
+twine = "^5.0.0"
 
 [build-system]
 requires = ["poetry-core"]

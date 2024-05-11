@@ -9,7 +9,7 @@ import json
 import requests
 from datetime import datetime
 from tenacity import retry, stop_after_attempt, wait_exponential
-from .. import Secret
+from .. import Vault
 from requests import Response
 from .base import BaseMsg
 from anydoor.utils import logger
@@ -39,23 +39,19 @@ class msgqywx(BaseMsg):
                 "expire_time": datetime.now().timestamp() + 3600,
                 "access_token": data["access_token"],
             }
-            Secret.add(self.sec_temp_name, secret_json)
+            Vault().add(self.sec_temp_name, secret_json)
             return secret_json["access_token"]
         else:
             response.raise_for_status()
 
     def get_access_token(self):
-        access_json = Secret.get(self.sec_temp_name, raise_exception=False)
-        if access_json:
+        access_json = Vault().get(self.sec_temp_name, raise_exception=False)
+        if access_json.expire_time:
             if access_json.expire_time > datetime.now().timestamp():
                 return access_json.access_token
         return self.get_access_token_from_wx()
 
-    @retry(
-        reraise=True,
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=20),
-    )
+    @retry(reraise=True, stop=stop_after_attempt(3))
     def send(
         self, message: str, msgtype: str = "text", raise_exception=False
     ) -> Response:
