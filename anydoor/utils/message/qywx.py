@@ -9,7 +9,8 @@ import json
 import requests
 from datetime import datetime
 from tenacity import retry, stop_after_attempt, wait_exponential
-from .. import Vault
+
+
 from requests import Response
 from .base import BaseMsg
 from anydoor.utils import logger
@@ -20,12 +21,16 @@ class msgqywx(BaseMsg):
     sec_temp_name = "qywx_access_token"
     PASSWD_NAME_ENV = "QYWX_PASSWD_NAME"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.secret_json = dict()
+
     @retry(
         reraise=True,
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=20),
     )
-    def get_access_token_from_wx(self):
+    def get_access_token_from_wx(self, raise_exception):
         response = requests.post(
             self.url,
             params={
@@ -35,21 +40,23 @@ class msgqywx(BaseMsg):
         )
         if response.ok:
             data = json.loads(response.text)
-            secret_json = {
+            self.secret_json = {
                 "expire_time": datetime.now().timestamp() + 3600,
                 "access_token": data["access_token"],
             }
-            Vault().add(self.sec_temp_name, secret_json)
-            return secret_json["access_token"]
-        else:
-            response.raise_for_status()
 
-    def get_access_token(self):
-        access_json = Vault().get(self.sec_temp_name, raise_exception=False)
-        if access_json.expire_time:
-            if access_json.expire_time > datetime.now().timestamp():
-                return access_json.access_token
-        return self.get_access_token_from_wx()
+            return self.secret_json["access_token"]
+        else:
+            if raise_exception:
+                response.raise_for_status()
+            else:
+                return ""
+
+    def get_access_token(self, raise_exception):
+        if self.secret_json:
+            if self.access_json["expire_time"] > datetime.now().timestamp():
+                return self.access_json.access_token
+        return self.get_access_token_from_wx(raise_exception)
 
     @retry(reraise=True, stop=stop_after_attempt(3))
     def send(
@@ -64,8 +71,12 @@ class msgqywx(BaseMsg):
         :return: 微信返回的response，可以自行处理错误信息，也可不处理
         """
         assert msgtype in ["text", "markdown"], TypeError()
+        access_token = self.get_access_token(raise_exception=raise_exception)
+        if not access_token:
+            logger.warning("Message send fail")
+            return
 
-        send_url = f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={self.get_access_token()}"
+        send_url = f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={access_token}"
 
         payload = {
             "touser": self.secret.user,
