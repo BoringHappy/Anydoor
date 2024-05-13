@@ -1,5 +1,6 @@
 import os
-from .. import Vault, SingletonType, Secret
+from ..vault import Vault, Secret
+from ..singleton import SingletonType
 
 
 class UserError(Exception): ...

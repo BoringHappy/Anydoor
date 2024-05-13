@@ -9,7 +9,8 @@ from sqlalchemy import create_engine, Engine
 
 from .base import BaseDB
 import pandas as pd
-from anydoor.utils import logger, Secret
+from ..utils import logger
+from ..utils.vault import Secret
 
 
 class Clickhouse(BaseDB):

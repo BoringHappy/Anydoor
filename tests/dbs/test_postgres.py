@@ -1,4 +1,4 @@
-from anydoor.dbs import Postgres
+from anydoor.dbs.postgres import Postgres
 import pandas as pd
 
 

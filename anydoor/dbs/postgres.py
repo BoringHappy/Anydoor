@@ -10,7 +10,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.sql import text
 from functools import partial
 from .base import BaseDB
-from ..utils import Secret
+from ..utils.vault import Secret
 
 
 def pgsql_upsert(table, conn, keys, data_iter, on_conflict):

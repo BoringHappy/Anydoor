@@ -1,5 +1,5 @@
-from anydoor.utils import cache_db
-from anydoor.dbs import Postgres
+from anydoor.utils.cache import cache_db
+from anydoor.dbs.postgres import Postgres
 from functools import partial
 
 
@@ -18,8 +18,9 @@ def test_cache_db():
 
     assert cache_test(1, 2, c=3) == {"a": 1, "b": 2, "c": 3}
     assert cache_test(4, 3, c=3) == {"a": 4, "b": 3, "c": 3}
-    assert pg.execute(f"select * from {schema}.{table}").shape == (3, 4)
+    assert cache_test(4, 3, 3) == {"a": 4, "b": 3, "c": 3}
 
+    assert pg.execute(f"select * from {schema}.{table}").shape == (4, 4)
     pg.truncate(table=table, schema=schema)
     pg.execute(f"drop table  {schema}.{table}")
 

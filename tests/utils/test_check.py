@@ -1,4 +1,4 @@
-from anydoor.utils import check
+from anydoor.utils.check import check
 import pytest
 
 

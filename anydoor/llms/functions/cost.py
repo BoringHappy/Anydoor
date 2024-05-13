@@ -1,5 +1,5 @@
 from langchain_community.callbacks import get_openai_callback
-from ...utils import SingletonType
+from ...utils.singleton import SingletonType
 
 
 class Costs(metaclass=SingletonType):

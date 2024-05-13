@@ -1,5 +1,5 @@
 import os
-from ...utils import Vault
+from ...utils.vault import Vault
 
 
 class Token:

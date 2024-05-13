@@ -1,4 +1,4 @@
-from anydoor.dbs import Sqlite
+from anydoor.dbs.sqlite import Sqlite
 
 import pandas as pd
 

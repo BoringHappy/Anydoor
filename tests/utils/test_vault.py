@@ -1,4 +1,4 @@
-from anydoor.utils import Vault, Secret
+from anydoor.utils.vault import Vault, Secret
 import os
 
 

@@ -1,4 +1,4 @@
-from anydoor.dbs import Clickhouse
+from anydoor.dbs.clickhouse import Clickhouse
 import pandas as pd
 
 

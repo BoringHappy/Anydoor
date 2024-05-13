@@ -13,7 +13,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 from requests import Response
 from .base import BaseMsg
-from anydoor.utils import logger
+from ...utils import logger
 
 
 class msgqywx(BaseMsg):

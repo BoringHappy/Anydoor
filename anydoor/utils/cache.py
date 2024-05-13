@@ -4,9 +4,12 @@ from sqlalchemy.types import String, DateTime
 from sqlalchemy import select
 from datetime import datetime, timedelta
 from sqlalchemy.dialects.postgresql import insert
+from ..dbs.postgres import Postgres
 
 
-def cache_db(conn, schema, table, expire_duration=timedelta(days=1)):
+def cache_db(
+    conn: Postgres, schema, table, set_pk=True, expire_duration=timedelta(days=1)
+):
     conn.ensure_table(
         table=table,
         schema=schema,
@@ -16,7 +19,7 @@ def cache_db(conn, schema, table, expire_duration=timedelta(days=1)):
             "result": String(),
             "record_time": DateTime(),
         },
-        primary_keys=["args", "kwargs"],
+        primary_keys=["args", "kwargs"] if set_pk else None,
     )
 
     def decorator(func):
