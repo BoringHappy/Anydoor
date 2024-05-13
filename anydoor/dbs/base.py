@@ -1,13 +1,14 @@
 import pandas as pd
 from datetime import datetime
 from uuid import uuid1
-from anydoor.utils import Vault, Secret
+from ..utils.vault import Vault, Secret
 from sqlalchemy.types import DateTime, Float, String, Date, BIGINT, TEXT
 
 from sqlalchemy.sql import text
 from typing import List, Optional
 from sqlalchemy import Engine, inspect, Column, MetaData, Table
 from sqlalchemy.exc import IntegrityError
+from functools import lru_cache
 
 
 class BaseDB:
@@ -26,13 +27,16 @@ class BaseDB:
     ):
         self.database = database
         self.schema = schema or self.default_schema
-        self.secret = secret or Vault().get(secret_name)
-        self.engine = engine or self.create_engine(
-            secret=self.secret,
-            database=self.database,
-            schema=self.schema,
-            **create_engine_options,
-        )
+        if engine:
+            self.engine = engine
+        else:
+            secret = secret or Vault().get(secret_name)
+            self.engine = self.create_engine(
+                secret=secret,
+                database=self.database,
+                schema=self.schema,
+                **create_engine_options,
+            )
 
     @classmethod
     def create_engine(
@@ -63,12 +67,18 @@ class BaseDB:
                     dtype[col] = String(length=df[col].apply(str).apply(len).max() + 10)
         return dtype
 
-    def execute(self, sql: str) -> Optional[pd.DataFrame]:
-        if "select" in sql.lower():
-            return pd.read_sql(text(sql), con=self.engine)
+    def execute(self, sql: str, return_pandas=True) -> Optional[pd.DataFrame]:
+        if isinstance(sql, str):
+            sql = text(sql)
+        if "select" in str(sql).lower():
+            if return_pandas:
+                return pd.read_sql(sql, con=self.engine)
+            else:
+                with self.engine.connect() as conn:
+                    return conn.execute(sql)
         else:
             with self.engine.connect() as conn:
-                conn.execute(text(sql))
+                conn.execute(sql)
                 conn.commit()
 
     def ensure_table(

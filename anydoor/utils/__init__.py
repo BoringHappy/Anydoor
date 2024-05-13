@@ -5,6 +5,7 @@ from .singleton import SingletonType
 from .time import TimeUtils
 from .log import logger
 from .vault import Vault, Secret
+from .cache import cache_db
 
 __all__ = [
     "check",
@@ -16,4 +17,5 @@ __all__ = [
     "logger",
     "Vault",
     "Secret",
+    "cache_db",
 ]
