@@ -6,7 +6,7 @@ from sqlalchemy.types import DateTime, Float, String, Date, BIGINT, TEXT
 
 from sqlalchemy.sql import text
 from typing import List, Optional
-from sqlalchemy import Engine, inspect, Column, MetaData, Table
+from sqlalchemy import Engine, inspect, Column, MetaData, Table, Index
 from sqlalchemy.exc import IntegrityError
 from functools import lru_cache
 
@@ -37,8 +37,6 @@ class BaseDB:
                 schema=self.schema,
                 **create_engine_options,
             )
-
-    
 
     @classmethod
     def create_engine(
@@ -152,6 +150,16 @@ class BaseDB:
                 sql = f"""ALTER TABLE "{schema}"."{table}" ADD PRIMARY KEY ("{'","'.join(primary_keys)}")"""
                 print(f"[PRIMARY KEY Change]sql：{sql}")
                 self.execute(sql)
+
+    def create_index(self, schema, table, name, field):
+        mytable = self.get_table(table=table, schema=schema)
+        return Index(name, mytable.c.get(field))
+
+    def ensure_index(self, _index: Index):
+        if _index:
+            indexes = _index.table.indexes
+            if _index.name not in [i.name for i in indexes]:
+                _index.create(self.engine)
 
     def check_varchar_length(self, df: pd.DataFrame, schema: str, table: str):
         sql_table = self.get_table(table=table, schema=schema)
