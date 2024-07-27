@@ -3,6 +3,7 @@ import os
 from typing import Dict
 from .singleton import SingletonType
 from types import SimpleNamespace
+from copy import deepcopy
 
 
 class Secret(SimpleNamespace):
@@ -15,8 +16,11 @@ class Secret(SimpleNamespace):
     def __bool__(self):
         return bool(vars(self))
 
-    def json(self):
-        return vars(self)
+    def json(self, **kwargs):
+        json_str = deepcopy(vars(self))
+        json_str.update(kwargs)
+        return json_str
+
 
 class Vault(metaclass=SingletonType):
     """
