@@ -7,7 +7,7 @@ def test_vault():
         "api_key": "12345",
         "api_secret": "12345",
     }
-    mount_point = "kvs"
+    mount_point = "lcoaltest"
     Vault().add(path="test_sec", secret=test_secret, mount_point=mount_point)
     result = Vault().get("test_sec", mount_point=mount_point)
     assert result.__dict__ == test_secret

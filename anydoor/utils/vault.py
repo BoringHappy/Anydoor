@@ -15,6 +15,8 @@ class Secret(SimpleNamespace):
     def __bool__(self):
         return bool(vars(self))
 
+    def json(self):
+        return vars(self)
 
 class Vault(metaclass=SingletonType):
     """
