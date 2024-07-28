@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "anydoor"
-version = "0.1.2"
+version = "0.1.3"
 description = "Anydoor to any cozy functions and classes. Suitable for data and llm"
 authors = ["veinkr <yhf2lj@gmail.com>"]
 readme = "README.md"
