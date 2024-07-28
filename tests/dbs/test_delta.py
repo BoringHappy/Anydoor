@@ -43,6 +43,7 @@ def test_delta_with_pandas():
         .reset_index(drop=True)
         .equals(df.reset_index(drop=True))
     )
+    Delta.get_table("polars_test").vacuum()
 
 
 def test_delta_with_polars():
@@ -68,6 +69,8 @@ def test_delta_with_polars():
         .reset_index(drop=True)
         .equals(df.to_pandas().reset_index(drop=True))
     )
+
+    Delta.get_table("polars_test").vacuum()
 
 
 if __name__ == "__main__":
