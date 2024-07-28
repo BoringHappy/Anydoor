@@ -14,7 +14,7 @@ keywords = ["anydoor"]
 Changelog = "https://github.com/veinkr/Anydoor/commits/main/"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 pandas = "^2.2.2"
 numpy = "^1.26.4"
 SQLAlchemy = ">2.0"
