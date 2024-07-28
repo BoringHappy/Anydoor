@@ -31,6 +31,8 @@ clickhouse-sqlalchemy = "^0.3.1"
 hvac = "^2.2.0"
 deltalake = "^0.18.2"
 polars = "^1.2.1"
+prompt-toolkit = "^3.0.47"
+jsonmerge = "^1.9.2"
 
 [tool.poetry.group.dev.dependencies]
 tqdm = "^4.66.2"
