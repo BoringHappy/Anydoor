@@ -30,6 +30,10 @@ class Vault(metaclass=SingletonType):
 
     def __init__(self, url=None, token=None):
         self.client = hvac.Client(url=url, token=token)
+        if self.client.sys.is_sealed():
+            self.client.sys.submit_unseal_key(key=os.getenv("VAULT_UNSEAL_KEY"))
+            assert not self.client.sys.is_sealed()
+            
         assert self.client.is_authenticated()
         assert self.client.sys.is_initialized()
 
