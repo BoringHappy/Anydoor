@@ -1,0 +1,45 @@
+[project]
+authors = [{ name = "veinkr", email = "yhf2lj@gmail.com" }]
+dependencies = []
+description = "Add a short description here"
+name = "anydoor"
+requires-python = ">= 3.11"
+version = "0.1.0"
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+
+[tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+pandas = ">=2.2.2,<3"
+polars = ">=1.2.1,<2"
+tqdm = ">=4.66.4,<5"
+psycopg2-binary = ">=2.9.9,<3"
+func_timeout = ">=4.3.5,<5"
+sqlalchemy = ">=2.0.31,<3"
+numpy = "<2"
+hvac = ">=2.3.0,<3"
+tenacity = ">=9.0.0,<10"
+bs4 = ">=4.12.3,<5"
+lxml = ">=5.2.2,<6"
+aiohttp = ">=3.9.5,<4"
+deltalake = ">=0.18.2,<0.19"
+boto3 = ">=1.35.5,<2"
+cloudpathlib = ">=0.18.1,<0.19"
+hatchling = ">=1.25.0,<2"
+
+[tool.pixi.pypi-dependencies]
+anydoor = { path = ".", editable = true }
+exchange-calendars = ">=4.5.5, <5"
+pdfplumber = ">=0.9.0,<0.10"
+redis = ">=5.0.8, <6"
+pytest = ">=8.3.2, <9"
+clickhouse-sqlalchemy = ">=0.3.2, <0.4"
+kafka-python = ">=2.0.2, <3"

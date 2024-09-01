@@ -1,0 +1,55 @@
+# -*- coding:utf-8 -*-
+"""
+filename : feishu.py
+createtime : 2021/6/20 21:46
+author : Demon Finch
+"""
+import requests
+from tenacity import retry, stop_after_attempt, wait_exponential
+from .base import BaseMsg
+
+import hashlib
+import base64
+import hmac
+from datetime import datetime
+from typing import Union
+
+
+def gen_sign(timestamp, secret):
+    # 拼接timestamp和secret
+    string_to_sign = "{}\n{}".format(timestamp, secret)
+    hmac_code = hmac.new(
+        string_to_sign.encode("utf-8"), digestmod=hashlib.sha256
+    ).digest()
+
+    # 对结果进行base64处理
+    sign = base64.b64encode(hmac_code).decode("utf-8")
+
+    return sign
+
+
+class msgfs(BaseMsg):
+    BASE_URL = "https://open.feishu.cn/open-apis/bot/v2/hook/"
+    PASSWD_NAME_ENV = "FEISHU_PASSWD_NAME"
+    secret_name = "feishu"
+
+    def send(self, message_dict: Union[str, dict]):
+        current_timestamp = int(datetime.now().timestamp())
+        message_dict.update(
+            {
+                "timestamp": current_timestamp,
+                "sign": gen_sign(current_timestamp, self.secret.sign),
+            }
+        )
+        response = requests.post(
+            url=self.secret.url,
+            json=message_dict,
+        )
+        print(response.text)
+        if not response.ok:
+            response.raise_for_status()
+        else:
+            return response
+
+    def send_text(self, text):
+        self.send({"msg_type": "text", "content": {"text": text}})
