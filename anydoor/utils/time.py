@@ -22,3 +22,10 @@ class TimeUtils:
         :param weekday: 返回设定周几的日期
         """
         return day - timedelta(day.weekday()) + timedelta(weekday - 1)
+
+    @classmethod
+    def nearest_weekday(cls, day: date, weekday) -> date:
+        if day.weekday() >= weekday:
+            return cls.this_weekday(day, weekday)
+        else:
+            return cls.this_weekday(day, weekday) - timedelta(7)
