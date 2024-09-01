@@ -1,7 +1,0 @@
-name: anydoor
-channels:
-  - conda-forge
-dependencies:
-  - poetry=1.8.2=linux_pyha804496_0
-  - python=3.11.8=hab00c5b_0_cpython
-  
