@@ -14,12 +14,13 @@ def cache_db(
         table=table,
         schema=schema,
         dtype={
+            "func_name": String(),
             "args": String(),
             "kwargs": String(),
             "result": String(),
             "record_time": DateTime(),
         },
-        primary_keys=["args", "kwargs"] if set_pk else None,
+        primary_keys=["func_name", "args", "kwargs"] if set_pk else None,
     )
 
     def decorator(func):
@@ -33,6 +34,7 @@ def cache_db(
             str_kwargs = json.dumps(kwargs)
             result = conn.execute(
                 select(_table.c.result, _table.c.record_time)
+                .where(_table.c.func_name == str(func.__name__))
                 .where(_table.c.args == str_args)
                 .where(_table.c.kwargs == str_kwargs),
                 return_pandas=False,
@@ -48,13 +50,14 @@ def cache_db(
             conn.execute(
                 insert(_table)
                 .values(
+                    func_name=str(func.__name__),
                     args=str_args,
                     kwargs=str_kwargs,
                     result=str_result,
                     record_time=record_time,
                 )
                 .on_conflict_do_update(
-                    index_elements=[_table.c.args, _table.c.kwargs],
+                    index_elements=[_table.c.func_name, _table.c.args, _table.c.kwargs],
                     set_=dict(
                         result=str_result,
                         record_time=record_time,
