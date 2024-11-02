@@ -8,7 +8,13 @@ from ..dbs.postgres import Postgres
 
 
 def cache_db(
-    conn: Postgres, schema, table, set_pk=True, expire_duration=timedelta(days=1)
+    conn: Postgres,
+    schema,
+    table,
+    set_pk=True,
+    expire_duration=timedelta(days=1),
+    return_cache=True,
+    cache_condition=None,
 ):
     conn.ensure_table(
         table=table,
@@ -32,38 +38,44 @@ def cache_db(
             )
             str_args = json.dumps(args)
             str_kwargs = json.dumps(kwargs)
-            result = conn.execute(
-                select(_table.c.result, _table.c.record_time)
-                .where(_table.c.func_name == str(func.__name__))
-                .where(_table.c.args == str_args)
-                .where(_table.c.kwargs == str_kwargs),
-                return_pandas=False,
-            ).first()
-            if result:
-                if result[1] > datetime.now() - expire_duration:
-                    return json.loads(result[0])
+            if return_cache:
+                result = conn.execute(
+                    select(_table.c.result, _table.c.record_time)
+                    .where(_table.c.func_name == str(func.__name__))
+                    .where(_table.c.args == str_args)
+                    .where(_table.c.kwargs == str_kwargs),
+                    return_pandas=False,
+                ).first()
+                if result:
+                    if result[1] > datetime.now() - expire_duration:
+                        return json.loads(result[0])
 
             result = func(*args, **kwargs)
 
             str_result = json.dumps(result)
             record_time = datetime.now()
-            conn.execute(
-                insert(_table)
-                .values(
+            if cache_condition is None or cache_condition(str_result):
+                insert_clause = insert(_table).values(
                     func_name=str(func.__name__),
                     args=str_args,
                     kwargs=str_kwargs,
                     result=str_result,
                     record_time=record_time,
                 )
-                .on_conflict_do_update(
-                    index_elements=[_table.c.func_name, _table.c.args, _table.c.kwargs],
-                    set_=dict(
-                        result=str_result,
-                        record_time=record_time,
-                    ),
-                )
-            )
+                if set_pk:
+                    insert_clause = insert_clause.on_conflict_do_update(
+                        index_elements=[
+                            _table.c.func_name,
+                            _table.c.args,
+                            _table.c.kwargs,
+                        ],
+                        set_=dict(
+                            result=str_result,
+                            record_time=record_time,
+                        ),
+                    )
+
+                conn.execute(insert_clause)
             return result
 
         return wrapper
