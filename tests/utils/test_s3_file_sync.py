@@ -1,7 +1,8 @@
 from anydoor.utils.s3_file_sync import S3FileSync
 import os
+import pytest
 
-
+@pytest.mark.skip(reason="Call API")
 def test_s3_file_sync():
     local_test_path = os.path.join(os.path.dirname(__file__), "tmp")
     s3_path = "s3://test-bucket/file_sync_test"

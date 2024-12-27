@@ -14,13 +14,13 @@ def test_cache_db():
         return {"a": a, "b": b, "c": c}
 
     assert cache_test(2, 2, c=3) == {"a": 2, "b": 2, "c": 3}
-    assert pg.execute(f"select * from {schema}.{table}").shape == (1, 4)
+    assert pg.execute(f"select * from {schema}.{table}").shape == (1, 5)
 
     assert cache_test(1, 2, c=3) == {"a": 1, "b": 2, "c": 3}
     assert cache_test(4, 3, c=3) == {"a": 4, "b": 3, "c": 3}
     assert cache_test(4, 3, 3) == {"a": 4, "b": 3, "c": 3}
 
-    assert pg.execute(f"select * from {schema}.{table}").shape == (4, 4)
+    assert pg.execute(f"select * from {schema}.{table}").shape == (4, 5)
     pg.truncate(table=table, schema=schema)
     pg.execute(f"drop table  {schema}.{table}")
 

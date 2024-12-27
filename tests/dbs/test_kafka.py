@@ -2,8 +2,9 @@ from anydoor.dbs import Kafka
 from time import sleep
 from confluent_kafka.admin import NewTopic
 from uuid import uuid1
+import pytest
 
-
+@pytest.mark.skip(reason="Call API")
 def test_kafka():
     boot_server = "192.168.5.244:9092"
     test_topic_prefix = "_test_topic_"

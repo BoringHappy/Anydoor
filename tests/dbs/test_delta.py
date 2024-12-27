@@ -3,8 +3,10 @@ from anydoor.utils.vault import Secret
 import pandas as pd
 import polars as ps
 from deltalake import write_deltalake, DeltaTable
+import pytest
 
 
+@pytest.mark.skip(reason="Call API")
 def test_delta():
     assert isinstance(Delta.secret(), Secret)
     assert Delta.bucket() == "data-lake"
@@ -17,6 +19,7 @@ def test_delta():
     assert Delta.get_table_path("test") == "s3://data-lake/default/test"
 
 
+@pytest.mark.skip(reason="Call API")
 def test_delta_with_pandas():
     df = pd.DataFrame({"num": [1, 2, 3], "letter": ["a", "b", "c"]})
     write_deltalake(
@@ -45,7 +48,7 @@ def test_delta_with_pandas():
     )
     Delta.get_table("polars_test").vacuum()
 
-
+@pytest.mark.skip(reason="Call API")
 def test_delta_with_polars():
     df = ps.DataFrame({"num": [1, 2, 3], "letter": ["a", "b", "c"]})
     df.write_delta(
