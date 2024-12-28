@@ -3,7 +3,6 @@ from .clickhouse import Clickhouse
 from .sql_runner import SQLRunner
 from .sqlite import Sqlite
 from .kafka import Kafka
-from .questdb import QuestDB
 
 __all__ = [
     Postgres,
@@ -11,5 +10,4 @@ __all__ = [
     Sqlite,
     SQLRunner,
     Kafka,
-    QuestDB,
 ]
