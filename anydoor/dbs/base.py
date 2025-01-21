@@ -138,7 +138,7 @@ class BaseDB:
                     if col.lower() == "create_time" or "datetime" in str(col_type):
                         col_sql_type = DateTime()
                     elif "float" in str(col_type):
-                        col_sql_type = Float(64)
+                        col_sql_type = Float(53)
                     elif "int" in str(col_type):
                         col_sql_type = BIGINT()
                     else:
