@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from typing import Dict
 
 import hvac
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .singleton import SingletonType
 
@@ -53,25 +54,20 @@ class Vault(metaclass=SingletonType):
             path=path, secret=secret, mount_point=self.get_mount_point(mount_point)
         )
 
-    def get(self, path: str, mount_point: str = None, raise_exception=True) -> Secret:
-        def raise_exceptions():
-            if raise_exception:
-                raise Exception(f"Non exists {path}")
-            else:
-                return Secret()
-
-        if not path:
-            raise_exceptions()
-        try:
-            return Secret(
-                **self.client.secrets.kv.read_secret(
-                    path=path,
-                    mount_point=self.get_mount_point(mount_point),
-                    raise_on_deleted_version=False,
-                )["data"]["data"]
-            )
-        except:
-            raise_exceptions()
+    @retry(
+        reraise=True,
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=20),
+    )
+    def get(self, path: str, mount_point: str = None) -> Secret:
+        assert isinstance(path, str), Exception(f"Non exists {path}")
+        return Secret(
+            **self.client.secrets.kv.read_secret(
+                path=path,
+                mount_point=self.get_mount_point(mount_point),
+                raise_on_deleted_version=False,
+            )["data"]["data"]
+        )
 
     def delete(self, path: str, mount_point=None):
         return self.client.secrets.kv.delete_metadata_and_all_versions(
