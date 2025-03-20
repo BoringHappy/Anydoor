@@ -23,5 +23,3 @@ def test_s3_file_sync():
     with S3FileSync(s3_path, local_test_path, clean=True):
         assert os.path.exists(os.path.join(local_test_path, "test.txt"))
     assert not os.path.exists(local_test_path)
-        assert os.path.exists(os.path.join(local_test_path, "test.txt"))
-    assert not os.path.exists(local_test_path)

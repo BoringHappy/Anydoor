@@ -78,5 +78,3 @@ class Vault(metaclass=SingletonType):
             path=path,
             mount_point=self.get_mount_point(mount_point),
         )
-            mount_point=self.get_mount_point(mount_point),
-        )
