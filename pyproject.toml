@@ -1,49 +1,43 @@
 [project]
-authors = [{ name = "veinkr", email = "yhf2lj@gmail.com" }]
-description = "Add a short description here"
+authors = [{ name = "veinkr", email = "veinkr.finch@gmail.com" }]
 name = "anydoor"
-requires-python = ">= 3.11"
 version = "0.1.4"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+
+dependencies = [
+    "aiohttp>=3.11.14",
+    "boto3>=1.37.16",
+    "bs4>=0.0.2",
+    "clickhouse-sqlalchemy>=0.3.2",
+    "cloudpathlib>=0.21.0",
+    "confluent-kafka>=2.8.2",
+    "deltalake>=0.25.4",
+    "func-timeout>=4.3.5",
+    "hatchling>=1.27.0",
+    "hvac>=2.3.0",
+    "loguru>=0.7.3",
+    "lxml>=5.3.1",
+    "numpy>=2.2.4",
+    "pandas>=2.2.3",
+    "polars>=1.25.2",
+    "psycopg2-binary>=2.9.10",
+    "questdb>=2.0.3",
+    "redis>=5.2.1",
+    "sqlalchemy>=2.0.39",
+    "tenacity>=9.0.0",
+    "tqdm>=4.67.1",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3.5"]
 
 [build-system]
-build-backend = "hatchling.build"
 requires = ["hatchling"]
-
-[tool.pixi.project]
-channels = ["conda-forge"]
-platforms = ["linux-64"]
-
-
-[tool.pixi.tasks]
-upgrade-version = "pixi project version patch"
-build = { cmd = "pixi run hatchling build -t wheel", depends-on = [
-    "upgrade-version",
-] }
-
-[tool.pixi.dependencies]
-pandas = ">=2.2.2,<3"
-polars = ">=1.2.1,<2"
-tqdm = ">=4.66.4,<5"
-psycopg2-binary = ">=2.9.9,<3"
-func_timeout = ">=4.3.5,<5"
-sqlalchemy = ">=2.0.31,<3"
-numpy = "<2"
-hvac = ">=2.3.0,<3"
-tenacity = ">=9.0.0,<10"
-bs4 = ">=4.12.3,<5"
-lxml = ">=5.2.2,<6"
-aiohttp = ">=3.9.5,<4"
-deltalake = ">=0.18.2,<0.19"
-boto3 = ">=1.35.5,<2"
-cloudpathlib = ">=0.18.1,<0.19"
-hatchling = ">=1.25.0,<2"
-
-[tool.pixi.pypi-dependencies]
-anydoor = { path = ".", editable = true }
-exchange-calendars = ">=4.5.5, <5"
-pdfplumber = ">=0.9.0,<0.10"
-redis = ">=5.0.8, <6"
-pytest = ">=8.3.2, <9"
-clickhouse-sqlalchemy = ">=0.3.2, <0.4"
-confluent-kafka = ">=2.5.3,<3"
-questdb= ">=2.0.3,<3"
+build-backend = "hatchling.build"
