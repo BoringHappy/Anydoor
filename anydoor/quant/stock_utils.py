@@ -4,9 +4,11 @@
 @file   : stock_utils.py
 @create : 2022/2/23 21:58
 """
+
 from functools import lru_cache
 
 import pandas as pd
+
 from ..dbs.postgres import Postgres
 
 
@@ -49,4 +51,5 @@ def is_trade_date(select_day=None):
         return True
     else:
         print(f"{select_day} 非交易日")
+        return False
         return False

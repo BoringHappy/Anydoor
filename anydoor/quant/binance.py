@@ -4,13 +4,15 @@ filename : binance_api.py
 create_time : 2021/5/14 16:57
 author : Demon Finch
 """
+
 import hashlib
 import hmac
 import json
 from datetime import datetime
 from urllib.parse import urlencode
-from tenacity import retry, stop_after_attempt, wait_fixed
+
 import requests
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 
 class Interval:
@@ -252,4 +254,5 @@ class BinanceApi:
 if __name__ == "__main__":
     print(f"localtime start:{datetime.now()}")
 
+    print(f"localtime end:{datetime.now()}")
     print(f"localtime end:{datetime.now()}")

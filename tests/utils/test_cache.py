@@ -1,6 +1,5 @@
-from anydoor.utils.cache import cache_db
 from anydoor.dbs.postgres import Postgres
-from functools import partial
+from anydoor.utils.cache import cache_db
 
 
 def test_cache_db():
@@ -26,4 +25,5 @@ def test_cache_db():
 
 
 if __name__ == "__main__":
+    test_cache_db()
     test_cache_db()

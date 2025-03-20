@@ -2,7 +2,6 @@ import os
 
 
 class Container:
-
     @classmethod
     def is_docker(cls):
         return os.path.exists("/.dockerenv")

@@ -1,9 +1,11 @@
-import hvac
 import os
-from typing import Dict
-from .singleton import SingletonType
-from types import SimpleNamespace
 from copy import deepcopy
+from types import SimpleNamespace
+from typing import Dict
+
+import hvac
+
+from .singleton import SingletonType
 
 
 class Secret(SimpleNamespace):
@@ -33,7 +35,7 @@ class Vault(metaclass=SingletonType):
         if self.client.sys.is_sealed():
             self.client.sys.submit_unseal_key(key=os.getenv("VAULT_UNSEAL_KEY"))
             assert not self.client.sys.is_sealed()
-            
+
         assert self.client.is_authenticated()
         assert self.client.sys.is_initialized()
 
@@ -74,5 +76,7 @@ class Vault(metaclass=SingletonType):
     def delete(self, path: str, mount_point=None):
         return self.client.secrets.kv.delete_metadata_and_all_versions(
             path=path,
+            mount_point=self.get_mount_point(mount_point),
+        )
             mount_point=self.get_mount_point(mount_point),
         )

@@ -5,12 +5,12 @@ create_time : 2021/12/29 19:30
 author : Demon Finch
 """
 
-from sqlalchemy import create_engine, Engine
-
-from .base import BaseDB
 import pandas as pd
+from sqlalchemy import Engine, create_engine
+
 from ..utils import logger
 from ..utils.vault import Secret
+from .base import BaseDB
 
 
 class Clickhouse(BaseDB):
@@ -60,11 +60,11 @@ class Clickhouse(BaseDB):
         if not self.is_table_exists(schema=schema, table=table):
             sql = f"""
                 CREATE TABLE IF NOT EXISTS {schema or self.schema}.{table} 
-                ({', '.join([f'`{k}` {v}' for k, v in dtype.items()])} ) 
+                ({", ".join([f"`{k}` {v}" for k, v in dtype.items()])} ) 
                 ENGINE = {ck_engine or "MergeTree"}() 
                 """
             if partition_keys:
-                sql += f' PARTITION BY ({",".join(partition_keys)}) '
+                sql += f" PARTITION BY ({','.join(partition_keys)}) "
             sql += f""" PRIMARY KEY ({",".join(primary_keys)}) ORDER BY ({",".join(primary_keys)}) """
             logger.info(f"create Clickhouse Table: {sql}")
             self.execute(sql)

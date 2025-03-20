@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from functools import lru_cache
 from sqlalchemy.exc import ProgrammingError
 
+
 class BaseDB:
     DB_TYPE = None
     default_schema = None
@@ -87,12 +88,11 @@ class BaseDB:
         try:
             return self.execute(sql).iloc[0].to_dict()
         except ProgrammingError as e:
-            if "relation" in str(e)  and "does not exist" in str(e):
+            if "relation" in str(e) and "does not exist" in str(e):
                 return default
             raise e
         except Exception as e:
             raise e
-        
 
     def ensure_table(
         self,
@@ -203,7 +203,7 @@ class BaseDB:
         column_type = column.type.compile(self.engine.dialect)
         alter_sql = (
             f"ALTER TABLE {schema}.{table} {action} COLUMN {column_name} "
-            f'{"TYPE" if action=="ALTER" else ""} {column_type}'
+            f"{'TYPE' if action == 'ALTER' else ''} {column_type}"
         )
         print(f"[{action} column]: {alter_sql}")
         self.execute(alter_sql)

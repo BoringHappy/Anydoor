@@ -1,8 +1,11 @@
-from anydoor.dbs import Kafka
 from time import sleep
-from confluent_kafka.admin import NewTopic
 from uuid import uuid1
+
 import pytest
+from confluent_kafka.admin import NewTopic
+
+from anydoor.dbs import Kafka
+
 
 @pytest.mark.skip(reason="Call API")
 def test_kafka():
@@ -60,5 +63,7 @@ def test_kafka():
         assert len(get_test_topic()) == 0
 
 
+if __name__ == "__main__":
+    test_kafka()
 if __name__ == "__main__":
     test_kafka()

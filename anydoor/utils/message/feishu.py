@@ -4,15 +4,16 @@ filename : feishu.py
 createtime : 2021/6/20 21:46
 author : Demon Finch
 """
-import requests
-from tenacity import retry, stop_after_attempt, wait_exponential
-from .base import BaseMsg
 
-import hashlib
 import base64
+import hashlib
 import hmac
 from datetime import datetime
 from typing import Union
+
+import requests
+
+from .base import BaseMsg
 
 
 def gen_sign(timestamp, secret):
@@ -52,4 +53,5 @@ class msgfs(BaseMsg):
             return response
 
     def send_text(self, text):
+        self.send({"msg_type": "text", "content": {"text": text}})
         self.send({"msg_type": "text", "content": {"text": text}})

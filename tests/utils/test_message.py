@@ -1,6 +1,9 @@
-from anydoor.utils.message import msgqywx, msgfs
-import pytest
 from datetime import datetime
+
+import pytest
+
+from anydoor.utils.message import msgfs, msgqywx
+
 
 @pytest.mark.skip(reason="Call API")
 def test_qywx():
@@ -16,5 +19,7 @@ def test_feishu():
     assert ret.ok
 
 
+if __name__ == "__main__":
+    test_qywx()
 if __name__ == "__main__":
     test_qywx()

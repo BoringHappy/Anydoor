@@ -4,7 +4,6 @@ from typing import List, Union
 
 
 class check(object):
-
     @classmethod
     def env(cls, envs: Union[str, List[str]]):
         if isinstance(envs, str):
@@ -18,15 +17,8 @@ class check(object):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-
                 return func(*args, **kwargs)
 
             return wrapper
 
         return decorator
-
-
-
-
-
-

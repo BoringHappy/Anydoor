@@ -1,9 +1,10 @@
-from anydoor.dbs.delta import Delta
-from anydoor.utils.vault import Secret
 import pandas as pd
 import polars as ps
-from deltalake import write_deltalake, DeltaTable
 import pytest
+from deltalake import DeltaTable, write_deltalake
+
+from anydoor.dbs.delta import Delta
+from anydoor.utils.vault import Secret
 
 
 @pytest.mark.skip(reason="Call API")
@@ -48,6 +49,7 @@ def test_delta_with_pandas():
     )
     Delta.get_table("polars_test").vacuum()
 
+
 @pytest.mark.skip(reason="Call API")
 def test_delta_with_polars():
     df = ps.DataFrame({"num": [1, 2, 3], "letter": ["a", "b", "c"]})
@@ -80,4 +82,5 @@ if __name__ == "__main__":
     # test_delta()
     # test_delta_with_pandas()
     # test_delta_with_polars()
+    ...
     ...

@@ -1,6 +1,9 @@
-from anydoor.utils.s3_file_sync import S3FileSync
 import os
+
 import pytest
+
+from anydoor.utils.s3_file_sync import S3FileSync
+
 
 @pytest.mark.skip(reason="Call API")
 def test_s3_file_sync():
@@ -18,5 +21,7 @@ def test_s3_file_sync():
     assert os.path.exists(local_test_path)
 
     with S3FileSync(s3_path, local_test_path, clean=True):
+        assert os.path.exists(os.path.join(local_test_path, "test.txt"))
+    assert not os.path.exists(local_test_path)
         assert os.path.exists(os.path.join(local_test_path, "test.txt"))
     assert not os.path.exists(local_test_path)
