@@ -7,10 +7,6 @@ readme = "README.md"
 requires-python = ">=3.12"
 
 
-[tool.pytest.ini_options]
-pythonpath = ["."]
-
-
 dependencies = [
     "aiohttp>=3.11.14",
     "boto3>=1.37.16",
