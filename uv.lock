@@ -93,7 +93,6 @@ dependencies = [
     { name = "pandas" },
     { name = "polars" },
     { name = "psycopg2-binary" },
-    { name = "questdb" },
     { name = "redis" },
     { name = "sqlalchemy" },
     { name = "tenacity" },
@@ -124,7 +123,6 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "polars", specifier = ">=1.25.2" },
     { name = "psycopg2-binary", specifier = ">=2.9.9" },
-    { name = "questdb", specifier = ">=2.0.3" },
     { name = "redis", specifier = ">=5.2.1" },
     { name = "sqlalchemy", specifier = ">=2.0.39" },
     { name = "tenacity", specifier = ">=9.0.0" },
@@ -901,23 +899,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/5f/57/df1c9157c8d5a05117e455d66fd7cf6dbc46974f832b1058ed4856785d8a/pytz-2025.1.tar.gz", hash = "sha256:c2db42be2a2518b28e65f9207c4d05e6ff547d1efa4086469ef855e4ab70178e", size = 319617 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/eb/38/ac33370d784287baa1c3d538978b5e2ea064d4c1b93ffbd12826c190dd10/pytz-2025.1-py2.py3-none-any.whl", hash = "sha256:89dd22dca55b46eac6eda23b2d72721bf1bdfef212645d81513ef5d03038de57", size = 507930 },
-]
-
-[[package]]
-name = "questdb"
-version = "2.0.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/27/de/3b8b192e5b82d6033a13c9714f90a93aec2efeaac36200dc64a6dc5abb5b/questdb-2.0.3.tar.gz", hash = "sha256:510f4eeb5509e479bba73795cebe4417321288f0052d605aecb11b76fabed88b", size = 11870218 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/41/8d/709e340754ebf31965c90a0437a73c81eec8a9f5ab23f97b1b1b82ab41f7/questdb-2.0.3-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:5fbf91cf047676ab4fb5089f4430e682f95eac6c15434d5392b1192b768550b1", size = 3114661 },
-    { url = "https://files.pythonhosted.org/packages/09/02/ddd46ec62fdbcdba381e2b58ff290f738ebbd8b94dedaa73c6fa4a241002/questdb-2.0.3-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:cab6b514468eb3bea220449d6d80c5f6334e6c744963f69f01c6521f5ff11507", size = 3044087 },
-    { url = "https://files.pythonhosted.org/packages/9c/98/a288cc512e63f1247f2915682de38ede4ebfdfc332e2b008fc661083ad6c/questdb-2.0.3-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:34ee2bc84b75dcaba58b56d00e506b59ad1b18b17c8c0b5a21492c971a183bda", size = 5385073 },
-    { url = "https://files.pythonhosted.org/packages/58/f9/7bd3bb2d99f0ae020d7e7ba21795bf2c7dff46797d92a63452c6dd38ea32/questdb-2.0.3-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:7c6c5bafceacd40a0b89e28fd55cc251b291d084d10700dadabf670423bcdee2", size = 5710072 },
-    { url = "https://files.pythonhosted.org/packages/46/5a/2cb2127ed690df086b3575b44844a4de509d29a40480ca9d3b8e4156ac65/questdb-2.0.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f2d3192cbb68abb3dc4ce12964cc98b434065831b6829053e5861829828e974b", size = 5669091 },
-    { url = "https://files.pythonhosted.org/packages/2b/1f/8b68d5129675955cd602227c739748676e00b5f357289727b6c21269a97e/questdb-2.0.3-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:651f11d944243a1a93b41c88e520341fba386008a58aaf1b59fbd0a2efe44bc4", size = 5381575 },
-    { url = "https://files.pythonhosted.org/packages/d7/d3/5816fd97c02bf8aaf817ae424bf213affe5e1980ce34df24c39c8105cc13/questdb-2.0.3-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:347e8645e94c3500a7b8ad48eeff573bf3d22d2f24c3b8d3c3fd8550d78e5101", size = 5760695 },
-    { url = "https://files.pythonhosted.org/packages/d8/3c/649a7b0bd4cc377c4c428f3fa90abe919e711bc6d225d37742a7e460afc7/questdb-2.0.3-cp312-cp312-win32.whl", hash = "sha256:c20883714531c8e41e67c7f6743a9c33575aacce0cb398a34eea9ce67be9e3e1", size = 1629233 },
-    { url = "https://files.pythonhosted.org/packages/5e/e0/ee63f54e6110d4392ea09a3181b7ec19d2f50c9bd1d4d11272a105491868/questdb-2.0.3-cp312-cp312-win_amd64.whl", hash = "sha256:e8620490c5fc656107782c99bb640e91feb6beb1baf6f7af2fd6a7dc341e735a", size = 1884883 },
 ]
 
 [[package]]
