@@ -1,15 +1,15 @@
-import pandas as pd
 from datetime import datetime
-from uuid import uuid1
-from ..utils.vault import Vault, Secret
-from sqlalchemy.types import DateTime, Float, String, Date, BIGINT, TEXT
-
-from sqlalchemy.sql import text
-from typing import List, Optional
-from sqlalchemy import Engine, inspect, Column, MetaData, Table, Index
-from sqlalchemy.exc import IntegrityError
 from functools import lru_cache
-from sqlalchemy.exc import ProgrammingError
+from typing import List, Optional
+from uuid import uuid1
+
+import pandas as pd
+from sqlalchemy import Column, Engine, Index, MetaData, Table, inspect
+from sqlalchemy.exc import IntegrityError, ProgrammingError
+from sqlalchemy.sql import text
+from sqlalchemy.types import BIGINT, TEXT, Date, DateTime, Float, String
+
+from ..utils.vault import Secret, Vault
 
 
 class BaseDB:
@@ -198,7 +198,7 @@ class BaseDB:
         self, column: Column, schema: str, table: str, action: str = "ALTER"
     ):
         if action not in ["ALTER", "ADD"]:
-            raise ValueError(f'action should be in ["ALTER","ADD"]')
+            raise ValueError('action should be in ["ALTER","ADD"]')
         column_name = column.compile(dialect=self.engine.dialect)
         column_type = column.type.compile(self.engine.dialect)
         alter_sql = (
