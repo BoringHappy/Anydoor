@@ -1,4 +1,3 @@
-from .log import logger
-
+from loguru import logger
 
 __all__ = ["logger"]
