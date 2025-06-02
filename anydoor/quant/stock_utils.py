@@ -54,4 +54,3 @@ def is_trade_date(select_day=None):
     else:
         print(f"{select_day} 非交易日")
         return False
-        return False
