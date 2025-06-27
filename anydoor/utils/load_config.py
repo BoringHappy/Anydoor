@@ -1,5 +1,6 @@
 import argparse
 import json
+from datetime import datetime, timedelta
 
 import yaml
 from dateparser import parse
@@ -35,7 +36,13 @@ def load_config():
 
     if args.config_file:
         with open(args.config_file, "r") as f:
-            config = yaml.safe_load(Template(f.read()).render(run_time=args.run_time))
+            config = yaml.safe_load(
+                Template(f.read()).render(
+                    run_time=args.run_time,
+                    timedelta=timedelta,
+                    datetime=datetime,
+                )
+            )
             f.close()
     else:
         config = dict()
