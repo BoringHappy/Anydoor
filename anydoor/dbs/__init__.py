@@ -1,8 +1,9 @@
-from .postgres import Postgres
 from .clickhouse import Clickhouse
+from .kafka import Kafka
+from .postgres import Postgres
+from .spark import init_spark
 from .sql_runner import SQLRunner
 from .sqlite import Sqlite
-from .kafka import Kafka
 
 __all__ = [
     Postgres,
@@ -10,4 +11,5 @@ __all__ = [
     Sqlite,
     SQLRunner,
     Kafka,
+    init_spark,
 ]
