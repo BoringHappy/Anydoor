@@ -3,6 +3,7 @@ from typing import List, Optional
 from uuid import uuid1
 
 import pandas as pd
+from loguru import logger
 from sqlalchemy import Column, Engine, Index, MetaData, Table, inspect
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 from sqlalchemy.sql import text
@@ -110,7 +111,7 @@ class BaseDB:
                 chunksize=1000,
                 dtype=dtype,
             )
-            print(f"Created: {schema}.{table} ")
+            logger.info(f"Created: {schema}.{table} ")
 
         if primary_keys:
             self.ensure_primary_key(
@@ -120,7 +121,7 @@ class BaseDB:
     def truncate(self, table: str, schema: str):
         if self.is_table_exists(schema=schema, table=table):
             self.execute(f"truncate table {schema}.{table}")
-            print(f"{schema}.{table} truncated")
+            logger.info(f"{schema}.{table} truncated")
 
     def is_table_exists(self, table: str, schema: str = None) -> bool:
         with self.engine.connect() as conn:
@@ -160,7 +161,7 @@ class BaseDB:
             constraint = self.get_table(table=table, schema=schema).primary_key
             if not constraint:
                 sql = f"""ALTER TABLE "{schema}"."{table}" ADD PRIMARY KEY ("{'","'.join(primary_keys)}")"""
-                print(f"[PRIMARY KEY Change]sql：{sql}")
+                logger.info(f"[PRIMARY KEY Change]sql：{sql}")
                 self.execute(sql)
 
     def create_index(self, schema, table, name, field):
@@ -204,7 +205,7 @@ class BaseDB:
             f"ALTER TABLE {schema}.{table} {action} COLUMN {column_name} "
             f"{'TYPE' if action == 'ALTER' else ''} {column_type}"
         )
-        print(f"[{action} column]: {alter_sql}")
+        logger.info(f"[{action} column]: {alter_sql}")
         self.execute(alter_sql)
 
     def get_conflict_func(self, on_conflict): ...

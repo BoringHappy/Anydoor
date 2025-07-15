@@ -12,6 +12,7 @@ from datetime import datetime
 from typing import Union
 
 import requests
+from loguru import logger
 
 from .base import BaseMsg
 
@@ -46,7 +47,7 @@ class msgfs(BaseMsg):
             url=self.secret.url,
             json=message_dict,
         )
-        print(response.text)
+        logger.info(response.text)
         if not response.ok:
             response.raise_for_status()
         else:

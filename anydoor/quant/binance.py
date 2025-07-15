@@ -12,6 +12,7 @@ from datetime import datetime
 from urllib.parse import urlencode
 
 import requests
+from loguru import logger
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 
@@ -229,7 +230,7 @@ class BinanceApi:
         self.restapi = RestApiRequest(
             host=self.host, url=api, method=method, sign=sign, no_time=no_time
         )
-        print(kwargs)
+        logger.info(kwargs)
         for arg_key, arg_value in kwargs.items():
             self.restapi.put_url(arg_key, arg_value)
         return self.sign_requests().call_sync()
@@ -243,7 +244,7 @@ class BinanceApi:
             proxies=self.proxies,
         )
         if response.ok:
-            print(
+            logger.info(
                 f"{self.restapi.method} {self.restapi.url.split('?')[0]} -> {response.status_code}"
             )
             return response
@@ -252,7 +253,7 @@ class BinanceApi:
 
 
 if __name__ == "__main__":
-    print(f"localtime start:{datetime.now()}")
+    logger.info(f"localtime start:{datetime.now()}")
 
-    print(f"localtime end:{datetime.now()}")
-    print(f"localtime end:{datetime.now()}")
+    logger.info(f"localtime end:{datetime.now()}")
+    logger.info(f"localtime end:{datetime.now()}")

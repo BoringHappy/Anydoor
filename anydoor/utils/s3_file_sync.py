@@ -1,9 +1,12 @@
-from .vault import Vault
 import os
-from cloudpathlib import S3Client
 import shutil
 from contextlib import contextmanager
 from functools import lru_cache
+
+from cloudpathlib import S3Client
+from loguru import logger
+
+from .vault import Vault
 
 
 @contextmanager
@@ -15,12 +18,12 @@ def S3FileSync(s3_path, local_path, secret_name: str = None, clean: bool = True)
         endpoint_url=secret.AWS_ENDPOINT,
     )
     cloud_path = client.CloudPath(s3_path)
-    print("Downloading from s3...")
+    logger.info("Downloading from s3...")
     cloud_path.download_to(local_path)
     try:
         yield
     finally:
-        print("Uploading to s3...")
+        logger.info("Uploading to s3...")
         cloud_path.upload_from(local_path)
         if clean:
             shutil.rmtree(local_path)

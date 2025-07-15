@@ -8,6 +8,7 @@
 from functools import lru_cache
 
 import pandas as pd
+from loguru import logger
 
 from ..dbs.postgres import Postgres
 
@@ -49,8 +50,8 @@ def is_trade_date(select_day=None):
 
     trade_days = [i.strftime("%Y-%m-%d") for i in get_trade_cal().trade_cal.to_list()]
     if select_day in trade_days:
-        print(f"{select_day} 交易日")
+        logger.info(f"{select_day} 交易日")
         return True
     else:
-        print(f"{select_day} 非交易日")
+        logger.info(f"{select_day} 非交易日")
         return False
