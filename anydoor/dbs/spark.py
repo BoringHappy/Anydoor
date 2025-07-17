@@ -1,7 +1,6 @@
-from pyspark.sql import SparkSession
-
-
 def init_spark(driver_memory="4g", executor_memory="4g"):
+    from pyspark.sql import SparkSession
+
     packages = [
         "io.delta:delta-spark_2.12:3.2.1",
         "io.unitycatalog:unitycatalog-spark_2.12:0.2.0",
