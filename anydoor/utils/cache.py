@@ -1,69 +1,64 @@
-from functools import wraps
 import json
-from sqlalchemy.types import String, DateTime
-from sqlalchemy import select
 from datetime import datetime, timedelta
+from functools import wraps
+
+from sqlalchemy import Engine, inspect, select
 from sqlalchemy.dialects.postgresql import insert
-from ..dbs.postgres import Postgres
+from sqlalchemy.schema import Column, MetaData, Table
+from sqlalchemy.types import TEXT, DateTime, String
 
 
 def cache_db(
-    conn: Postgres,
+    engine: Engine,
     schema,
     table,
-    set_pk=True,
     expire_duration=timedelta(days=1),
-    return_cache=True,
-    cache_condition=None,
 ):
-    conn.ensure_table(
-        table=table,
-        schema=schema,
-        dtype={
-            "func_name": String(),
-            "args": String(),
-            "kwargs": String(),
-            "result": String(),
-            "record_time": DateTime(),
-        },
-        primary_keys=["func_name", "args", "kwargs"] if set_pk else None,
+    _table = Table(
+        table,
+        MetaData(schema=schema),
+        Column("func_name", String(), primary_key=True),
+        Column("args", String(), primary_key=True),
+        Column("kwargs", String(), primary_key=True),
+        Column("result", TEXT()),
+        Column("record_time", DateTime()),
     )
+
+    with engine.connect() as conn:
+        with conn.begin():
+            if not inspect(conn).has_table(table, schema=schema):
+                _table.create(conn)
 
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            _table = conn.get_table(
-                table=table,
-                schema=schema,
-            )
             str_args = json.dumps(args)
             str_kwargs = json.dumps(kwargs)
-            if return_cache:
+            with engine.connect() as conn:
                 result = conn.execute(
                     select(_table.c.result, _table.c.record_time)
                     .where(_table.c.func_name == str(func.__name__))
                     .where(_table.c.args == str_args)
                     .where(_table.c.kwargs == str_kwargs),
-                    return_pandas=False,
                 ).first()
-                if result:
-                    if result[1] > datetime.now() - expire_duration:
-                        return json.loads(result[0])
+                if result and result[1] > datetime.now() - expire_duration:
+                    return json.loads(result[0])
 
             result = func(*args, **kwargs)
 
             str_result = json.dumps(result)
             record_time = datetime.now()
-            if cache_condition is None or cache_condition(str_result):
-                insert_clause = insert(_table).values(
-                    func_name=str(func.__name__),
-                    args=str_args,
-                    kwargs=str_kwargs,
-                    result=str_result,
-                    record_time=record_time,
-                )
-                if set_pk:
-                    insert_clause = insert_clause.on_conflict_do_update(
+            with engine.connect() as conn:
+                insert_clause = (
+                    insert(_table)
+                    .values(
+                        func_name=str(func.__name__),
+                        args=str_args,
+                        kwargs=str_kwargs,
+                        result=str_result,
+                        record_time=record_time,
+                    )
+                    .on_conflict_do_update(
                         index_elements=[
                             _table.c.func_name,
                             _table.c.args,
@@ -74,8 +69,9 @@ def cache_db(
                             record_time=record_time,
                         ),
                     )
-
+                )
                 conn.execute(insert_clause)
+                conn.commit()
             return result
 
         return wrapper
