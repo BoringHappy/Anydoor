@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, AnyStr, Callable, Dict
 
 from loguru import logger
 
@@ -8,14 +9,14 @@ def get_incompleted_future_counts(_futures):
 
 
 def as_completed_download_futures(
-    download_futures,
+    running_futures,
     remove_at_done=True,
     stop_at_count=None,
     failed_at_exception=True,
 ):
-    for future in as_completed(download_futures):
-        done_key = download_futures[future]
-        incomplete_count = get_incompleted_future_counts(download_futures)
+    for future in as_completed(running_futures):
+        done_key = running_futures[future]
+        incomplete_count = get_incompleted_future_counts(running_futures)
         try:
             return_result = future.result()
             logger.info(
@@ -26,23 +27,31 @@ def as_completed_download_futures(
             if failed_at_exception:
                 raise e
         if remove_at_done:
-            del download_futures[future]
-        if stop_at_count:
-            if incomplete_count < stop_at_count:
-                break
+            del running_futures[future]
+        if stop_at_count and (incomplete_count < stop_at_count):
+            return
 
 
-def run_parallel(tasks, func, thread=6, executor=ThreadPoolExecutor):
+def run_parallel(
+    tasks: Dict[AnyStr, Any],
+    func: Callable,
+    thread: int = 6,
+    executor=ThreadPoolExecutor,
+    failed_at_exception: bool = True,
+):
     with executor(max_workers=thread) as executor:
-        download_futures = {}
+        running_futures = {}
         for task in tasks:
-            download_futures[executor.submit(func, *task)] = task
+            running_futures[executor.submit(func, **task)] = task
 
-            if len(download_futures) > 2 * thread:
+            if len(running_futures) > 2 * thread:
                 as_completed_download_futures(
-                    download_futures,
+                    running_futures=running_futures,
                     remove_at_done=True,
                     stop_at_count=thread,
+                    failed_at_exception=failed_at_exception,
                 )
 
-        as_completed_download_futures(download_futures)
+        as_completed_download_futures(
+            running_futures=running_futures, failed_at_exception=failed_at_exception
+        )
