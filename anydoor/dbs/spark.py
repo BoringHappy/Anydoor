@@ -1,4 +1,8 @@
-def init_spark(driver_memory="4g", executor_memory="4g"):
+def init_spark(
+    driver_memory="4g",
+    executor_memory="4g",
+    warehouse_location="/data/lake",
+):
     from pyspark.sql import SparkSession
 
     packages = [
@@ -18,6 +22,7 @@ def init_spark(driver_memory="4g", executor_memory="4g"):
         .config("spark.driver.memory", driver_memory)
         .config("spark.executor.memory", executor_memory)
         .config("spark.driver.maxResultsSize", "0")
+        .config("spark.sql.warehouse.dir", warehouse_location)
         .getOrCreate()
     )
     return spark
