@@ -2,6 +2,7 @@ def init_spark(
     driver_memory="4g",
     executor_memory="4g",
     warehouse_location="/data/lake",
+    ivy_location="/data/lake/.ivy",
 ):
     from pyspark.sql import SparkSession
 
@@ -23,6 +24,7 @@ def init_spark(
         .config("spark.executor.memory", executor_memory)
         .config("spark.driver.maxResultsSize", "0")
         .config("spark.sql.warehouse.dir", warehouse_location)
+        .config("spark.jars.ivy", ivy_location)
         .getOrCreate()
     )
     return spark
