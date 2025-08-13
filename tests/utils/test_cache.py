@@ -6,9 +6,10 @@ def test_cache_db():
     schema = "test"
     table = "test_cache"
     pg = Postgres(database="postgres", schema=schema, secret_name="postgres")
+    pg.execute(f"create schema if not exists {schema}")
     pg.execute(f"drop table if exists {schema}.{table}")
 
-    @cache_db(schema=schema, table=table, conn=pg)
+    @cache_db(engine=pg.engine, schema=schema, table=table)
     def cache_test(a, b, c=5):
         return {"a": a, "b": b, "c": c}
 
@@ -22,6 +23,7 @@ def test_cache_db():
     assert pg.execute(f"select * from {schema}.{table}").shape == (4, 5)
     pg.truncate(table=table, schema=schema)
     pg.execute(f"drop table  {schema}.{table}")
+    pg.execute(f"drop schema {schema}")
 
 
 if __name__ == "__main__":
