@@ -1,35 +1,46 @@
-from ..utils.vault import Vault, Secret
 import os
+
 from deltalake import DeltaTable
+
+from ..utils.vault import Secret, Vault
 
 
 class Delta:
-    MINIO_TOKEN = "MINIO_TOKEN_NAME"
+    S3_TOKEN = "S3_TOKEN_NAME"
     DELTA_LAKE_BUCKET = "DELTA_LAKE_BUCKET"
 
-    @classmethod
-    def secret(cls) -> Secret:
-        return Vault().get(os.environ[cls.MINIO_TOKEN])
-
-    @classmethod
-    def bucket(cls) -> str:
-        return os.environ[cls.DELTA_LAKE_BUCKET]
-
-    @classmethod
-    def get_table_path(
-        cls,
+    def __init__(
+        self,
         table_name: str,
         schema_name: str = "default",
-    ) -> str:
-        return os.path.join("s3://", cls.bucket(), schema_name, table_name)
+        catalog_name: str = "default",
+        bucket: str = None,
+        storage_options: dict = None,
+        secret_name: str = None,
+    ):
+        self.table_name = table_name
+        self.schema_name = schema_name
+        self.catalog_name = catalog_name
+        self.bucket = bucket
+        self.storage_options = self.get_storage_options(storage_options, secret_name)
 
-    @classmethod
-    def get_table(
-        cls,
-        table_name: str,
-        schema_name: str = "default",
-    ) -> DeltaTable:
-        return DeltaTable(
-            cls.get_table_path(table_name=table_name, schema_name=schema_name),
-            storage_options=cls.secret().json(),
+    def get_storage_options(self, storage_options, secret_name):
+        if storage_options:
+            return storage_options
+        if secret_name:
+            return Vault().get(secret_name).json()
+        return Vault().get(os.environ[self.S3_TOKEN]).json()
+
+    @property
+    def path(self):
+        return os.path.join(
+            "s3://",
+            self.bucket or os.environ[self.DELTA_LAKE_BUCKET],
+            self.catalog_name,
+            self.schema_name,
+            self.table_name,
         )
+
+    @property
+    def table(self):
+        return DeltaTable(self.path, storage_options=self.storage_options)

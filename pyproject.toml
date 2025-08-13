@@ -25,6 +25,7 @@ dependencies = [
     "pandas>=2.2.2",
     "polars>=1.24.0",
     "psycopg2-binary>=2.9.9",
+    "pyarrow>=21.0.0",
     "redis>=5.2.1",
     "sqlalchemy>=2.0.39",
     "tenacity>=9.0.0",
