@@ -8,7 +8,7 @@ requires-python = ">=3.12"
 
 
 dependencies = [
-    "aiohttp>=3.11.14",
+    "aiohttp>=3.12.0",
     "boto3>=1.37.16",
     "bs4>=0.0.2",
     "clickhouse-sqlalchemy>=0.3.2",
@@ -18,6 +18,7 @@ dependencies = [
     "func-timeout>=4.3.5",
     "hatchling>=1.27.0",
     "hvac>=2.3.0",
+    "hydra-core>=1.3.2",
     "loguru>=0.7.3",
     "lxml>=5.3.1",
     "numpy>=2.2.4",
