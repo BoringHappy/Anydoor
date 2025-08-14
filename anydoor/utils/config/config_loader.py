@@ -73,6 +73,7 @@ def load_hydra_config(
     config_name: Optional[str] = None,
     config_file: Optional[Union[str, Path]] = None,
     overrides: Optional[List[str]] = None,
+    to_dict: bool = False,
 ) -> DictConfig:
     """Load Hydra configuration with datetime resolvers."""
 
@@ -85,10 +86,15 @@ def load_hydra_config(
     config_dir = str(Path(config_dir).absolute())
 
     with initialize_config_dir(version_base=None, config_dir=config_dir):
-        return compose(config_name=config_name, overrides=overrides)
+        config = compose(config_name=config_name, overrides=overrides)
+
+    if to_dict:
+        return OmegaConf.to_container(config, resolve=True)
+    else:
+        return config
 
 
-def load_config() -> DictConfig:
+def load_config(to_dict: bool = False) -> DictConfig:
     """Load config from command-line args. Supports --config-file, --run-time, --override."""
     # Set up command-line argument parser
     parser = argparse.ArgumentParser(
@@ -117,6 +123,7 @@ def load_config() -> DictConfig:
     return load_hydra_config(
         config_file=args.config_file,
         overrides=args.override,
+        to_dict=to_dict,
     )
 
 
