@@ -12,13 +12,13 @@ from omegaconf import DictConfig, OmegaConf
 
 
 def register_datetime_resolvers() -> None:
-    """Register datetime resolvers: ${now}, ${date_add}, ${date_sub}, ${strftime}, ${parse_date}."""
+    """Register datetime resolvers: ${dt.now}, ${dt.add}, ${dt.sub}, ${dt.format}, ${dt.parse}."""
     # Register resolver for current datetime
-    OmegaConf.register_new_resolver("now", lambda: datetime.now(), replace=True)
+    OmegaConf.register_new_resolver("dt.now", lambda: datetime.now(), replace=True)
 
     # Register resolver for date arithmetic - addition
     OmegaConf.register_new_resolver(
-        "date_add",
+        "dt.add",
         lambda base_date, days=0, hours=0, minutes=0, seconds=0: base_date
         + timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds),
         replace=True,
@@ -26,7 +26,7 @@ def register_datetime_resolvers() -> None:
 
     # Register resolver for date arithmetic - subtraction
     OmegaConf.register_new_resolver(
-        "date_sub",
+        "dt.sub",
         lambda base_date, days=0, hours=0, minutes=0, seconds=0: base_date
         - timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds),
         replace=True,
@@ -34,12 +34,12 @@ def register_datetime_resolvers() -> None:
 
     # Register resolver for date formatting
     OmegaConf.register_new_resolver(
-        "strftime", lambda date_obj, fmt: date_obj.strftime(fmt), replace=True
+        "dt.format", lambda date_obj, fmt: date_obj.strftime(fmt), replace=True
     )
 
     # Register resolver to parse date strings
     OmegaConf.register_new_resolver(
-        "parse_date",
+        "dt.parse",
         lambda date_str: datetime.fromisoformat(date_str)
         if isinstance(date_str, str)
         else date_str,
