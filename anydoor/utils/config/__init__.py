@@ -1,7 +1,13 @@
-from .load_config import load_config
-from .load_hydra import load_hydra
+from .config_loader import (
+    load_config,
+    load_config_from_file,
+    load_hydra_config,
+    register_datetime_resolvers,
+)
 
 __all__ = [
-    "load_hydra",
     "load_config",
+    "load_config_from_file",
+    "load_hydra_config",
+    "register_datetime_resolvers",
 ]
