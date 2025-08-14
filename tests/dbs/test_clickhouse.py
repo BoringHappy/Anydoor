@@ -1,7 +1,10 @@
-from anydoor.dbs import Clickhouse
 import pandas as pd
+import pytest
+
+from anydoor.dbs import Clickhouse
 
 
+@pytest.mark.skip(reason="No Clickhouse")
 def test_to_sql():
     schema = "default"
     table = "test_unit"

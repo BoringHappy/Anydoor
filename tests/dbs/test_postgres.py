@@ -1,13 +1,15 @@
-from anydoor.dbs import Postgres
 import pandas as pd
+
+from anydoor.dbs import Postgres
 
 
 def test_to_sql():
     schema = "test"
     table = "test_unit"
     pg = Postgres(database="postgres", schema=schema, secret_name="postgres")
-
     pg.execute(f"drop table if exists {schema}.{table}")
+    pg.execute(f"drop schema if exists {schema}")
+    pg.execute(f"create schema {schema}")
 
     sample_data = [["Alex", 11, 120.5], ["Bob", 12, 153.7], ["Clarke", 13, 165.0]]
     df = pd.DataFrame(sample_data, columns=["Name", "Age", "Weight"])
@@ -55,7 +57,3 @@ def test_to_sql():
 
     pg.truncate(table=table, schema=schema)
     pg.execute(f"drop table  {schema}.{table}")
-
-
-if __name__ == "__main__":
-    test_to_sql()

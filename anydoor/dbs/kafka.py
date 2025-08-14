@@ -1,5 +1,6 @@
-from confluent_kafka import Producer, Consumer
 from typing import Union
+
+from confluent_kafka import Consumer, Producer
 from confluent_kafka.admin import AdminClient
 
 

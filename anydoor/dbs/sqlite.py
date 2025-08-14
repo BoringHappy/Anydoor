@@ -5,9 +5,9 @@ create_time : 2024/04/20 19:30
 author : Demon Finch
 """
 
-from sqlalchemy import Engine
+from sqlalchemy import Engine, create_engine
+
 from .base import BaseDB
-from sqlalchemy import create_engine
 
 
 class Sqlite(BaseDB):

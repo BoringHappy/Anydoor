@@ -42,6 +42,7 @@ def run_parallel(
     with executor(max_workers=thread) as executor:
         running_futures = {}
         for task in tasks:
+            assert isinstance(task, dict), "tasks item must be a dict"
             running_futures[executor.submit(func, **task)] = task
 
             if len(running_futures) > 2 * thread:

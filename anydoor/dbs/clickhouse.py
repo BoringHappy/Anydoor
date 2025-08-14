@@ -103,6 +103,14 @@ class Clickhouse(BaseDB):
         else:
             raise ValueError(f"Invalid dtype '{dtype}'")
 
-    def ensure_primary_key(self, *args, **kwargs): ...
-    def check_varchar_length(self, *args, **kwargs): ...
-    def change_column(self, *args, **kwargs): ...
+    def ensure_primary_key(self, *args, **kwargs):
+        raise AttributeError("No primary key change allowed in clickhouse")
+
+    def check_varchar_length(self, *args, **kwargs):
+        raise AttributeError("No varchar length check allowed in clickhouse")
+
+    def change_column(self, *args, **kwargs):
+        raise AttributeError("No column change allowed in clickhouse")
+
+    def truncate(self, *args, **kwargs):
+        raise AttributeError("No truncate allowed in clickhouse")

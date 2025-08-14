@@ -20,7 +20,7 @@ class Secret(SimpleNamespace):
         return bool(vars(self))
 
     def json(self, **kwargs):
-        json_str = deepcopy(vars(self))
+        json_str = deepcopy(self.__dict__)
         json_str.update(kwargs)
         return json_str
 

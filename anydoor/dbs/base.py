@@ -16,7 +16,7 @@ class BaseDB:
     DB_TYPE = None
     default_schema = None
     on_conflicts = ["replace", "ignore"]
-    secret_name = None
+    default_secret_name = None
 
     def __init__(
         self,
@@ -25,15 +25,16 @@ class BaseDB:
         secret_name: str = None,
         schema: str = None,
         engine: Engine = None,
-        create_engine_options=dict(),
+        create_engine_options: dict = None,
     ):
         self.database = database
         self.schema = schema or self.default_schema
-        if engine:
+        if isinstance(engine, Engine):
             self.engine = engine
         else:
-            secret_name = secret_name or self.secret_name
-            secret = secret or Vault().get(secret_name)
+            secret = secret or Vault().get(secret_name or self.default_secret_name)
+            create_engine_options = create_engine_options or dict()
+
             self.engine = self.create_engine(
                 secret=secret,
                 database=self.database,
@@ -89,10 +90,10 @@ class BaseDB:
             return self.execute(sql).iloc[0].to_dict()
         except ProgrammingError as e:
             if "relation" in str(e) and "does not exist" in str(e):
+                logger.warning(f"Table does not exist for query: {sql}")
                 return default
-            raise e
-        except Exception as e:
-            raise e
+            else:
+                raise e
 
     def ensure_table(
         self,

@@ -5,12 +5,14 @@ create_time : 2021/12/29 19:30
 author : Demon Finch
 """
 
-from sqlalchemy import MetaData, create_engine, Table, Engine
+from functools import partial
+
+from sqlalchemy import Engine, MetaData, Table, create_engine
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.sql import text
-from functools import partial
-from .base import BaseDB
+
 from ..utils.vault import Secret
+from .base import BaseDB
 
 
 def pgsql_upsert(table, conn, keys, data_iter, on_conflict):
