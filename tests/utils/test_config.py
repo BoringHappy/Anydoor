@@ -59,7 +59,7 @@ database:
 
     def test_load_basic_config(self, temp_config_dir):
         """Test loading a basic configuration."""
-        config = load_hydra_config(temp_config_dir, "config")
+        config = load_hydra_config(config_dir=temp_config_dir, config_name="config")
 
         assert config is not None
         assert config.app.name == "test_app"
@@ -72,7 +72,7 @@ database:
 
     def test_load_alternative_config(self, temp_config_dir):
         """Test loading an alternative configuration file."""
-        config = load_hydra_config(temp_config_dir, "alt_config")
+        config = load_hydra_config(config_dir=temp_config_dir, config_name="alt_config")
 
         assert config is not None
         assert config.app.name == "alt_app"
@@ -86,7 +86,9 @@ database:
         """Test loading configuration with overrides."""
         overrides = ["app.name=overridden_app", "app.debug=true", "database.port=9999"]
 
-        config = load_hydra_config(temp_config_dir, "config", overrides=overrides)
+        config = load_hydra_config(
+            config_dir=temp_config_dir, config_name="config", overrides=overrides
+        )
 
         assert config is not None
         assert config.app.name == "overridden_app"
@@ -99,7 +101,9 @@ database:
 
     def test_load_config_with_empty_overrides(self, temp_config_dir):
         """Test loading configuration with empty overrides list."""
-        config = load_hydra_config(temp_config_dir, "config", overrides=[])
+        config = load_hydra_config(
+            config_dir=temp_config_dir, config_name="config", overrides=[]
+        )
 
         assert config is not None
         assert config.app.name == "test_app"
@@ -108,7 +112,9 @@ database:
 
     def test_load_config_with_none_overrides(self, temp_config_dir):
         """Test loading configuration with None overrides (default behavior)."""
-        config = load_hydra_config(temp_config_dir, "config", overrides=None)
+        config = load_hydra_config(
+            config_dir=temp_config_dir, config_name="config", overrides=None
+        )
 
         assert config is not None
         assert config.app.name == "test_app"
@@ -129,11 +135,15 @@ database:
             assert GlobalHydra.instance().is_initialized()
 
             # load_hydra should clear the existing instance and work correctly
-            config1 = load_hydra_config(temp_config_dir, "config")
+            config1 = load_hydra_config(
+                config_dir=temp_config_dir, config_name="config"
+            )
             assert config1.app.name == "test_app"
 
             # Test multiple consecutive loads work
-            config2 = load_hydra_config(temp_config_dir, "alt_config")
+            config2 = load_hydra_config(
+                config_dir=temp_config_dir, config_name="alt_config"
+            )
             assert config2.app.name == "alt_app"
         finally:
             # Clean up manually
@@ -143,32 +153,38 @@ database:
     def test_multiple_consecutive_loads(self, temp_config_dir):
         """Test multiple consecutive config loads."""
         # Load first config
-        config1 = load_hydra_config(temp_config_dir, "config")
+        config1 = load_hydra_config(config_dir=temp_config_dir, config_name="config")
         assert config1.app.name == "test_app"
 
         # Load second config with overrides
         overrides = ["app.name=consecutive_test"]
-        config2 = load_hydra_config(temp_config_dir, "config", overrides=overrides)
+        config2 = load_hydra_config(
+            config_dir=temp_config_dir, config_name="config", overrides=overrides
+        )
         assert config2.app.name == "consecutive_test"
 
         # Load third config (different file)
-        config3 = load_hydra_config(temp_config_dir, "alt_config")
+        config3 = load_hydra_config(
+            config_dir=temp_config_dir, config_name="alt_config"
+        )
         assert config3.app.name == "alt_app"
 
     def test_invalid_config_directory(self):
         """Test behavior with invalid config directory."""
         with pytest.raises(Exception):
-            load_hydra_config("/nonexistent/directory", "config")
+            load_hydra_config(config_dir="/nonexistent/directory", config_name="config")
 
     def test_invalid_config_name(self, temp_config_dir):
         """Test behavior with invalid config name."""
         with pytest.raises(Exception):
-            load_hydra_config(temp_config_dir, "nonexistent_config")
+            load_hydra_config(
+                config_dir=temp_config_dir, config_name="nonexistent_config"
+            )
 
     def test_config_directory_path_types(self, temp_config_dir):
         """Test that both string and Path objects work for config_dir."""
         # Test with string path
-        config1 = load_hydra_config(temp_config_dir, "config")
+        config1 = load_hydra_config(config_dir=temp_config_dir, config_name="config")
         assert config1.app.name == "test_app"
 
         # Clean up for next test
@@ -176,7 +192,9 @@ database:
             GlobalHydra.instance().clear()
 
         # Test with Path object
-        config2 = load_hydra_config(Path(temp_config_dir), "config")
+        config2 = load_hydra_config(
+            config_dir=Path(temp_config_dir), config_name="config"
+        )
         assert config2.app.name == "test_app"
 
 

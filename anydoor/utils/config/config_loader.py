@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Union
 
-from dateparser import parse
 from hydra import compose, initialize_config_dir
 from hydra.core.global_hydra import GlobalHydra
 from loguru import logger
@@ -61,38 +60,32 @@ def _parse_config_path(config_file: Union[str, Path]) -> tuple[str, str]:
     return config_dir, config_name
 
 
-def _setup_hydra_environment(run_time: Optional[datetime] = None) -> None:
+def _setup_hydra_environment() -> None:
     """Setup Hydra environment: cleanup, register resolvers, set run_time."""
     if GlobalHydra.instance().is_initialized():
         GlobalHydra.instance().clear()
 
     register_datetime_resolvers()
-    OmegaConf.register_new_resolver("run_time", lambda: run_time, replace=True)
 
 
 def load_hydra_config(
-    config_dir: Union[str, Path],
-    config_name: str = "config",
+    config_dir: Optional[Union[str, Path]] = None,
+    config_name: Optional[str] = None,
+    config_file: Optional[Union[str, Path]] = None,
     overrides: Optional[List[str]] = None,
-    run_time: Optional[datetime] = None,
 ) -> DictConfig:
     """Load Hydra configuration with datetime resolvers."""
+
+    if config_file:
+        config_dir, config_name = _parse_config_path(config_file)
+
     overrides = overrides or []
-    run_time = run_time or datetime.now()
-    _setup_hydra_environment(run_time)
+    _setup_hydra_environment()
 
     config_dir = str(Path(config_dir).absolute())
 
     with initialize_config_dir(version_base=None, config_dir=config_dir):
-        hydra_config = compose(config_name=config_name, overrides=overrides)
-        additional_config = OmegaConf.create({"run_time": run_time.isoformat()})
-
-        # Disable struct mode temporarily to allow merging new keys
-        OmegaConf.set_struct(hydra_config, False)
-        hydra_config = OmegaConf.merge(hydra_config, additional_config)
-        OmegaConf.set_struct(hydra_config, True)
-
-        return hydra_config
+        return compose(config_name=config_name, overrides=overrides)
 
 
 def load_config() -> DictConfig:
@@ -110,13 +103,6 @@ def load_config() -> DictConfig:
     )
 
     parser.add_argument(
-        "--run-time",
-        type=parse,  # Uses dateparser for flexible date/time parsing
-        required=False,
-        help="Date and time for the ETL run (e.g., '2024-06-15 14:30:00', 'yesterday', '2 hours ago')",
-    )
-
-    parser.add_argument(
         "--override",
         type=str,
         nargs="*",  # Accept multiple override values
@@ -128,8 +114,10 @@ def load_config() -> DictConfig:
     args = parser.parse_args()
     logger.info(f"Parsed arguments: {args}")
 
-    config_dir, config_name = _parse_config_path(args.config_file)
-    return load_hydra_config(config_dir, config_name, args.override, args.run_time)
+    return load_hydra_config(
+        config_file=args.config_file,
+        overrides=args.override,
+    )
 
 
 if __name__ == "__main__":
