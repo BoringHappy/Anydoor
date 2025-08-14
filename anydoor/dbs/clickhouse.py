@@ -16,6 +16,7 @@ from .base import BaseDB
 class Clickhouse(BaseDB):
     DB_TYPE = "clickhouse"
     default_schema = "default"
+    default_secret_name = "clickhouse"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

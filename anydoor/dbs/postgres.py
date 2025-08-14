@@ -50,7 +50,7 @@ def on_conflict_do(on_conflict: str):
 class Postgres(BaseDB):
     DB_TYPE = "postgres"
     default_schema = "public"
-    secret_name = "postgres"
+    default_secret_name = "postgres"
 
     @classmethod
     def create_engine(cls, secret: Secret, database, schema, *args, **kwargs) -> Engine:
