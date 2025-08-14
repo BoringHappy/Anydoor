@@ -1,13 +1,12 @@
 """Configuration loader with Hydra integration and datetime resolvers."""
 
 import argparse
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import List, Optional, Union
 
 from dateparser import parse
-from hydra import compose, initialize, initialize_config_dir
+from hydra import compose, initialize_config_dir
 from hydra.core.global_hydra import GlobalHydra
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
@@ -49,14 +48,11 @@ def register_datetime_resolvers() -> None:
     )
 
 
-def _parse_config_path(
-    config_file: Union[str, Path], validate_exists: bool = False
-) -> tuple[str, str]:
+def _parse_config_path(config_file: Union[str, Path]) -> tuple[str, str]:
     """Parse config file path into (config_dir, config_name)."""
-    config_path = Path(config_file)
+    config_path = Path(str(config_file))
 
-    # Validate file existence if requested
-    if validate_exists and not config_path.exists():
+    if not config_path.exists():
         raise FileNotFoundError(f"Configuration file not found: {config_file}")
 
     config_dir = str(config_path.parent.absolute())
@@ -75,7 +71,7 @@ def _setup_hydra_environment(run_time: Optional[datetime] = None) -> None:
 
 
 def load_hydra_config(
-    config_dir: str,
+    config_dir: Union[str, Path],
     config_name: str = "config",
     overrides: Optional[List[str]] = None,
     run_time: Optional[datetime] = None,
@@ -85,39 +81,21 @@ def load_hydra_config(
     run_time = run_time or datetime.now()
     _setup_hydra_environment(run_time)
 
-    config_dir = str(config_dir)
+    config_dir = str(Path(config_dir).absolute())
 
-    init_func = initialize_config_dir if os.path.isabs(config_dir) else initialize
+    with initialize_config_dir(version_base=None, config_dir=config_dir):
+        hydra_config = compose(config_name=config_name, overrides=overrides)
+        additional_config = OmegaConf.create({"run_time": run_time.isoformat()})
 
-    # Load and compose configuration
-    with init_func(version_base=None, config_dir=config_dir):
-        return compose(config_name=config_name, overrides=overrides)
+        # Disable struct mode temporarily to allow merging new keys
+        OmegaConf.set_struct(hydra_config, False)
+        hydra_config = OmegaConf.merge(hydra_config, additional_config)
+        OmegaConf.set_struct(hydra_config, True)
 
-
-def load_config_from_file(
-    config_file: Union[str, Path],
-    run_time: Optional[datetime] = None,
-    overrides: Optional[List[str]] = None,
-) -> Dict:
-    """Load config directly from file without command-line parsing."""
-    # Parse configuration file path and validate existence
-    config_dir, config_name = _parse_config_path(config_file, validate_exists=True)
-
-    # Load configuration using Hydra
-    hydra_config = load_hydra_config(
-        config_dir=config_dir,
-        config_name=config_name,
-        overrides=overrides or [],
-        run_time=run_time,
-    )
-
-    hydra_config.run_time = run_time
-
-    logger.info(f"Configuration loaded from {config_file}: {hydra_config}")
-    return hydra_config
+        return hydra_config
 
 
-def load_config() -> Dict:
+def load_config() -> DictConfig:
     """Load config from command-line args. Supports --config-file, --run-time, --override."""
     # Set up command-line argument parser
     parser = argparse.ArgumentParser(
@@ -139,7 +117,7 @@ def load_config() -> Dict:
     )
 
     parser.add_argument(
-        "--overrides",
+        "--override",
         type=str,
         nargs="*",  # Accept multiple override values
         required=False,
@@ -150,15 +128,10 @@ def load_config() -> Dict:
     args = parser.parse_args()
     logger.info(f"Parsed arguments: {args}")
 
-    return load_config_from_file(args.config_file, args.run_time, args.overrides)
+    config_dir, config_name = _parse_config_path(args.config_file)
+    return load_hydra_config(config_dir, config_name, args.override, args.run_time)
 
 
 if __name__ == "__main__":
-    """
-    Command-line interface for testing configuration loading.
-    
-    Usage:
-        python config_loader.py --config-file path/to/config.yaml --run-time "2024-06-15 14:30:00"
-    """
     config = load_config()
     logger.info(f"Loaded configuration: {config}")
