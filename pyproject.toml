@@ -1,7 +1,7 @@
 [project]
 authors = [{ name = "veinkr", email = "veinkr.finch@gmail.com" }]
 name = "anydoor"
-version = "0.1.5"
+version = "0.1.6"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -29,6 +29,7 @@ dependencies = [
     "polars>=1.24.0",
     "psycopg2-binary>=2.9.9",
     "pyarrow>=21.0.0",
+    "pydantic>=2.11.7",
     "redis>=5.2.1",
     "sqlalchemy>=2.0.39",
     "tenacity>=9.0.0",

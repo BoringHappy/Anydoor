@@ -3,12 +3,13 @@
 import argparse
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Type, Union
 
 from hydra import compose, initialize_config_dir
 from hydra.core.global_hydra import GlobalHydra
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
+from pydantic import BaseModel
 
 
 def register_datetime_resolvers() -> None:
@@ -74,7 +75,9 @@ def load_hydra_config(
     config_file: Optional[Union[str, Path]] = None,
     overrides: Optional[List[str]] = None,
     to_dict: bool = False,
-) -> DictConfig:
+    pydantic_model: Optional[Type[BaseModel]] = None,
+    pydantic_model_config: Optional[dict] = None,
+) -> Union[DictConfig, BaseModel]:
     """Load Hydra configuration with datetime resolvers."""
 
     if config_file:
@@ -91,11 +94,20 @@ def load_hydra_config(
     if to_dict:
         return OmegaConf.to_container(config, resolve=True)
     else:
-        return config
+        if pydantic_model:
+            return pydantic_model.model_validate(
+                config, **(pydantic_model_config or dict())
+            )
+        else:
+            return config
 
 
-def load_config(to_dict: bool = False) -> DictConfig:
-    """Load config from command-line args. Supports --config-file, --run-time, --override."""
+def load_config(
+    to_dict: bool = False,
+    pydantic_model: Optional[Type[BaseModel]] = None,
+    pydantic_model_config: Optional[dict] = None,
+) -> Union[DictConfig, BaseModel]:
+    """Load config from command-line args. Supports --config-file, --override."""
     # Set up command-line argument parser
     parser = argparse.ArgumentParser(
         description="Configuration loader with Hydra and datetime support"
@@ -124,6 +136,8 @@ def load_config(to_dict: bool = False) -> DictConfig:
         config_file=args.config_file,
         overrides=args.override,
         to_dict=to_dict,
+        pydantic_model=pydantic_model,
+        pydantic_model_config=pydantic_model_config,
     )
 
 
