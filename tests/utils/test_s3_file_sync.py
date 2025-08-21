@@ -1,9 +1,11 @@
-import os
 from pathlib import Path
+
+import pytest
 
 from anydoor.utils.s3_file_sync import S3FileSync
 
 
+@pytest.mark.skip(reason="No S3")
 def test_s3_file_sync():
     local_test_path = Path(__file__).parent / "tmp"
     local_test_path.mkdir(parents=True, exist_ok=True)

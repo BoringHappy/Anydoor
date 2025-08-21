@@ -1,10 +1,12 @@
 import pandas as pd
 import polars as ps
+import pytest
 from deltalake import write_deltalake
 
 from anydoor.dbs.delta import Delta
 
 
+@pytest.mark.skip(reason="No Delta")
 def test_delta_with_pandas():
     df = pd.DataFrame({"num": [1, 2, 3], "letter": ["a", "b", "c"]})
     dt = Delta(table_name="pandas_test")
@@ -34,6 +36,7 @@ def test_delta_with_pandas():
     dt.table.vacuum()
 
 
+@pytest.mark.skip(reason="No Delta")
 def test_delta_with_polars():
     df = ps.DataFrame({"num": [1, 2, 3], "letter": ["a", "b", "c"]})
     dt = Delta(table_name="polars_test")

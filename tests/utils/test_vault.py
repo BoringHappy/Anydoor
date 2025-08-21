@@ -1,8 +1,11 @@
 import os
 
+import pytest
+
 from anydoor.utils.vault import Secret, Vault
 
 
+@pytest.mark.skip(reason="No Vault")
 def test_vault():
     test_secret = {
         "api_key": "12345",
