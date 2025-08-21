@@ -60,7 +60,8 @@ jobs:
           echo "Previous commit pyproject.toml content:"
           git show HEAD~1:pyproject.toml | grep -A 2 -B 2 "version" || echo "No previous version found"
           
-          PREVIOUS_VERSION=$(git show HEAD~1:pyproject.toml | uv run python get_version.py 2>/dev/null || echo "unknown")
+          # Get the previous version by looking at the actual file content from HEAD~1
+          PREVIOUS_VERSION=$(git show HEAD~1:pyproject.toml | grep '^version = ' | sed 's/version = "\(.*\)"/\1/')
           echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
           echo "Previous version: $PREVIOUS_VERSION"
 
@@ -73,6 +74,11 @@ jobs:
           echo "Comparing versions:"
           echo "  Current: '$CURRENT_VERSION'"
           echo "  Previous: '$PREVIOUS_VERSION'"
+          
+          echo "Version comparison details:"
+          echo "  Current version length: ${#CURRENT_VERSION}"
+          echo "  Previous version length: ${#PREVIOUS_VERSION}"
+          echo "  Versions are equal: $([ "$CURRENT_VERSION" = "$PREVIOUS_VERSION" ] && echo "true" || echo "false")"
           
           # Check if this is a new version or if previous version is unknown
           if [ "$PREVIOUS_VERSION" = "unknown" ] || [ "$PREVIOUS_VERSION" = "" ]; then
