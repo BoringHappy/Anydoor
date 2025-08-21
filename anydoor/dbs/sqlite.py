@@ -1,8 +1,6 @@
 # -*- coding:utf-8 -*-
 """
-filename : sqlite.py
-create_time : 2024/04/20 19:30
-author : Demon Finch
+SQLite database connection and operations
 """
 
 from sqlalchemy import Engine, create_engine

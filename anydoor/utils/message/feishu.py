@@ -1,8 +1,6 @@
 # -*- coding:utf-8 -*-
 """
-filename : feishu.py
-createtime : 2021/6/20 21:46
-author : Demon Finch
+Feishu (Lark) message sending utility
 """
 
 import base64

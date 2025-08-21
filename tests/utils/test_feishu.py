@@ -1,5 +1,6 @@
-from anydoor.utils.message.feishu import msgfs
 import pytest
+
+from anydoor.utils.message.feishu import msgfs
 
 
 @pytest.mark.skip(reason="Call API")
@@ -37,7 +38,7 @@ def test_feishu_card():
                         "tag": "action",
                     },
                 ],
-                "header": {"title": {"content": "raise_eeee", "tag": "plain_text"}},
+                "header": {"title": {"content": "plain_text", "tag": "plain_text"}},
             },
         }
     )
@@ -64,7 +65,7 @@ def test_feishu_format_text():
                                 {
                                     "tag": "button",
                                     "text": {"content": "LINK", "tag": "lark_md"},
-                                    "url": "http://192.168.5.244:31257/dags/raise_eeee/grid",
+                                    "url": "http://localhost:xxxx/dags/plain_text/grid",
                                     "type": "default",
                                     "value": {},
                                 }

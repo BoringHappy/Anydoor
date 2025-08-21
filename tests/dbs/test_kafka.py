@@ -9,7 +9,7 @@ from anydoor.dbs import Kafka
 
 @pytest.mark.skip(reason="Call API")
 def test_kafka():
-    boot_server = "192.168.5.244:9092"
+    boot_server = "localhost:9092"
     test_topic_prefix = "_test_topic_"
     test_topic = f"{test_topic_prefix}{uuid1()}"
     test_key = "key"
@@ -61,9 +61,3 @@ def test_kafka():
         client.delete_topics(get_test_topic())
         sleep(5)
         assert len(get_test_topic()) == 0
-
-
-if __name__ == "__main__":
-    test_kafka()
-if __name__ == "__main__":
-    test_kafka()

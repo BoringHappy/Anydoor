@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-@author : Demon Finch
-@file   : stock_utils.py
-@create : 2022/2/23 21:58
+Stock utility functions for market data processing
 """
 
 from functools import lru_cache

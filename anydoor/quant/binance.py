@@ -1,8 +1,6 @@
 # -*- coding:utf-8 -*-
 """
-filename : binance_api.py
-create_time : 2021/5/14 16:57
-author : Demon Finch
+Binance API client implementation
 """
 
 import hashlib

@@ -1,8 +1,6 @@
 # -*- coding:utf-8 -*-
 """
-filename : qywx.py
-createtime : 2024/4/20 21:46
-author : Demon Finch
+Enterprise WeChat message sending utility
 """
 
 import json

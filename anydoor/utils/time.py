@@ -1,8 +1,6 @@
 # -*- coding:utf-8 -*-
 """
-filename : time_function.py
-create_time : 2022/1/2 14:04
-author : Demon Finch
+Time utility functions for date manipulation
 """
 
 from datetime import date, timedelta

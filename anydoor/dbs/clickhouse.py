@@ -1,8 +1,6 @@
 # -*- coding:utf-8 -*-
 """
-filename : clickhouse.py
-create_time : 2021/12/29 19:30
-author : Demon Finch
+ClickHouse database connection and operations
 """
 
 import pandas as pd

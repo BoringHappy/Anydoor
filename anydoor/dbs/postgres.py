@@ -1,8 +1,6 @@
 # -*- coding:utf-8 -*-
 """
-filename : postgres.py
-create_time : 2021/12/29 19:30
-author : Demon Finch
+PostgreSQL database connection and operations
 """
 
 from functools import partial
