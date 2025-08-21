@@ -1,0 +1,140 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # 每天凌晨2点运行一次
+    - cron: '0 2 * * *'
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        # 获取完整的 git 历史用于扫描
+        fetch-depth: 0
+
+    - name: Run Gitleaks
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
+        GITLEAKS_ENABLE_SUMMARY: true
+        GITLEAKS_FAIL_ON: true
+        GITLEAKS_VERBOSE: true
+        GITLEAKS_LOGGER_LEVEL: info
+
+  trufflehog:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Run TruffleHog
+      uses: trufflesecurity/trufflehog@main
+      with:
+        args: >
+          --only-verified
+          --fail
+          --no-update
+          --exclude-paths .trufflehogignore
+          --format json
+          --output-file trufflehog-results.json
+
+    - name: Upload TruffleHog results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: trufflehog-results
+        path: trufflehog-results.json
+
+  bandit:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+      with:
+        version: latest
+
+    - name: Cache uv dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          .venv
+          .uv-cache
+        key: ${{ runner.os }}-uv-security-${{ hashFiles('**/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-security-
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Install bandit
+      run: uv add bandit
+
+    - name: Run Bandit security scan
+      run: uv run bandit -r anydoor/ -f json -o bandit-results.json || true
+
+    - name: Upload Bandit results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: bandit-results
+        path: bandit-results.json
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+      with:
+        version: latest
+
+    - name: Cache uv dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          .venv
+          .uv-cache
+        key: ${{ runner.os }}-uv-deps-${{ hashFiles('**/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-deps-
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Install safety
+      run: uv add safety
+
+    - name: Run safety check
+      run: uv run safety check --json --output safety-results.json || true
+
+    - name: Upload safety results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: safety-results
+        path: safety-results.json

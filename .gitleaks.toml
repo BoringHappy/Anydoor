@@ -1,0 +1,70 @@
+# Gitleaks configuration file
+# https://github.com/gitleaks/gitleaks/blob/main/config/gitleaks.toml
+
+[allowlist]
+description = "Allowlist for false positives"
+paths = [
+    # 文档和示例
+    "docs/",
+    "examples/",
+    "*.md",
+    
+    # 配置文件
+    "*.toml",
+    "*.yaml",
+    "*.yml",
+    "*.json",
+    
+    # 许可证文件
+    "LICENSE",
+    "COPYING",
+    
+    # 依赖锁定文件
+    "uv.lock",
+    "poetry.lock",
+    "Pipfile.lock",
+    
+    # 其他
+    ".gitignore",
+    ".dockerignore",
+    "Dockerfile",
+    "docker-compose.yml"
+]
+
+regexes = [
+    # 允许的测试数据
+    "test.*password.*=.*['\"]test['\"]",
+    "test.*api.*key.*=.*['\"]test.*key['\"]",
+    "test.*secret.*=.*['\"]test.*secret['\"]",
+    
+    # 允许的示例数据
+    "example.*password.*=.*['\"]example['\"]",
+    "sample.*api.*key.*=.*['\"]sample.*key['\"]",
+    
+    # 允许的占位符
+    "password.*=.*['\"]<password>['\"]",
+    "api.*key.*=.*['\"]<api_key>['\"]",
+    "secret.*=.*['\"]<secret>['\"]"
+]
+
+commits = [
+    # 允许的提交哈希（如果需要的话）
+]
+
+[detect]
+# 检测配置
+verbose = true
+redact = false
+exit-code = 1
+leaks-exit-code = 1
+
+[report]
+# 报告配置
+format = "json"
+output = "gitleaks-report.json"
+verbose = true
+
+[output]
+# 输出配置
+print-results = true
+print-summary = true
