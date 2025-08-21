@@ -1,0 +1,29 @@
+# -*- coding:utf-8 -*-
+"""
+Time utility functions for date manipulation
+"""
+
+from datetime import date, timedelta
+
+
+class TimeUtils:
+    @classmethod
+    def last_day_of_month(cls, any_day: date) -> date:
+        next_month = any_day.replace(day=28) + timedelta(days=4)  # this will never fail
+        return next_month - timedelta(days=next_month.day)
+
+    @classmethod
+    def this_weekday(cls, day: date, weekday) -> date:
+        """
+        获取本周日期
+        :param day: 日期
+        :param weekday: 返回设定周几的日期
+        """
+        return day - timedelta(day.weekday()) + timedelta(weekday - 1)
+
+    @classmethod
+    def nearest_weekday(cls, day: date, weekday) -> date:
+        if day.weekday() >= weekday:
+            return cls.this_weekday(day, weekday)
+        else:
+            return cls.this_weekday(day, weekday) - timedelta(7)

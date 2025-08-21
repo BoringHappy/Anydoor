@@ -1,0 +1,72 @@
+[project]
+authors = [{ name = "veinkr", email = "veinkr.finch@gmail.com" }]
+name = "anydoor"
+version = "0.2.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+
+
+dependencies = [
+    "aiohttp>=3.12.0",
+    "boto3>=1.37.16",
+    "bs4>=0.0.2",
+    "clickhouse-sqlalchemy>=0.3.2",
+    "cloudpathlib>=0.21.0",
+    "confluent-kafka>=2.8.2",
+    "dateparser>=1.2.2",
+    "deltalake>=0.25.4",
+    "func-timeout>=4.3.5",
+    "hatchling>=1.27.0",
+    "hvac>=2.3.0",
+    "hydra-core>=1.3.2",
+    "jinja2>=3.1.6",
+    "jsonmerge>=1.9.2",
+    "loguru>=0.7.3",
+    "lxml>=5.3.1",
+    "numpy>=2.2.4",
+    "pandas>=2.2.2",
+    "polars>=1.24.0",
+    "psycopg2-binary>=2.9.9",
+    "pyarrow>=21.0.0",
+    "pydantic>=2.11.7",
+    "redis>=5.2.1",
+    "sqlalchemy>=2.0.39",
+    "tenacity>=9.0.0",
+    "tqdm>=4.67.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.11.0",
+    "mypy>=1.8.0",
+    "types-requests>=2.32.4.20250809",
+    "pandas-stubs>=2.3.0.250703",
+    "types-hvac>=2.3.0.20250809",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=anydoor",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml"
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests"
+]

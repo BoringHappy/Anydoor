@@ -1,0 +1,211 @@
+# Example YAML Configuration for anydoor
+# This demonstrates various features including datetime resolvers
+
+# Application configuration
+app:
+  name: anydoor_example
+  version: 1.0.0
+  debug: false
+  environment: development
+  
+  # Using datetime resolvers
+  start_time: ${dt.now:}  # Current datetime
+  formatted_time: ${dt.format:${dt.now:},%Y-%m-%d %H:%M:%S}  # Formatted current time
+  
+  # Date arithmetic examples
+  future_date: ${dt.add:${dt.now:},7,0,0,0}  # 7 days from now
+  past_date: ${dt.sub:${dt.now:},30,2,0,0}  # 30 days and 2 hours ago
+  
+  # Parsing date strings
+  deadline: ${dt.parse:2024-12-31T23:59:59}
+  
+# Database configuration
+database:
+  host: localhost
+  port: 5432
+  name: anydoor_db
+  username: postgres
+  password: secret
+  
+  # Connection settings
+  pool_size: 10
+  max_overflow: 20
+  echo: false
+  
+  # Backup settings with datetime
+  backup_enabled: true
+  backup_time: ${dt.format:${dt.add:${dt.now:},0,1,0,0},%H:%M}  # Backup 1 hour from now
+  retention_days: 30
+
+# Logging configuration
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # Log file with timestamp in name
+  file: logs/app_${dt.format:${dt.now:},%Y%m%d}.log
+  
+  handlers:
+    - type: console
+      level: INFO
+    - type: file
+      level: DEBUG
+      filename: ${logging.file}
+      max_bytes: 10485760  # 10MB
+      backup_count: 5
+
+# API configuration
+api:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+  
+  # Rate limiting
+  rate_limit:
+    enabled: true
+    requests_per_minute: 100
+    
+  # CORS settings
+  cors:
+    enabled: true
+    origins:
+      - http://localhost:3000
+      - https://example.com
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+    headers:
+      - Content-Type
+      - Authorization
+
+# Task scheduling
+scheduler:
+  enabled: true
+  timezone: UTC
+  
+  jobs:
+    - name: daily_cleanup
+      schedule: "0 2 * * *"  # Daily at 2 AM
+      enabled: true
+      
+    - name: weekly_report
+      schedule: "0 9 * * 1"  # Monday at 9 AM
+      enabled: true
+      next_run: ${dt.add:${dt.now:},1,0,0,0}  # Tomorrow
+
+# External services
+services:
+  redis:
+    host: localhost
+    port: 6379
+    db: 0
+    password: null
+    
+  elasticsearch:
+    hosts:
+      - http://localhost:9200
+    index_prefix: anydoor
+    
+  email:
+    smtp_host: smtp.example.com
+    smtp_port: 587
+    username: noreply@example.com
+    password: email_secret
+    use_tls: true
+
+# Feature flags
+features:
+  new_ui: false
+  advanced_analytics: true
+  beta_features: false
+  
+  # Time-based feature flags (simplified - complex logic should be handled in code)
+  holiday_start: ${dt.parse:2024-12-01}
+  holiday_end: ${dt.parse:2024-12-31}
+
+# Security settings
+security:
+  secret_key: your-secret-key-here
+  jwt:
+    algorithm: HS256
+    expiration_hours: 24
+    refresh_expiration_days: 30
+    
+  # Password policy
+  password:
+    min_length: 8
+    require_uppercase: true
+    require_lowercase: true
+    require_numbers: true
+    require_symbols: false
+
+# Monitoring and metrics
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  health_check_interval: 30
+  
+  alerts:
+    email_recipients:
+      - admin@example.com
+      - ops@example.com
+    
+    thresholds:
+      cpu_usage: 80
+      memory_usage: 85
+      disk_usage: 90
+
+# Development settings
+development:
+  auto_reload: true
+  debug_toolbar: true
+  
+  # Test data generation
+  seed_data: true
+  test_users: 10
+  
+  # Mock external services
+  mock_services:
+    - redis
+    - elasticsearch
+
+# Production settings (can be overridden)
+production:
+  debug: false
+  auto_reload: false
+  workers: 8
+  
+  # Enhanced security
+  security:
+    force_https: true
+    hsts_max_age: 31536000
+    
+  # Performance
+  cache:
+    enabled: true
+    ttl: 3600
+    backend: redis
+
+# Custom business logic settings
+business:
+  company_name: "Example Corp"
+  
+  # Business hours with datetime calculations
+  business_hours:
+    start: "09:00"
+    end: "17:00"
+    timezone: "America/New_York"
+    
+  # Reporting periods
+  reporting:
+    daily_cutoff: ${dt.format:${dt.sub:${dt.now:},0,1,0,0},%H:00:00}  # 1 hour ago
+    weekly_start: ${dt.sub:${dt.now:},7,0,0,0}
+    monthly_start: ${dt.format:${dt.parse:${dt.format:${dt.now:},%Y-%m-01}},%Y-%m-%d}
+    
+  # SLA settings
+  sla:
+    response_time_hours: 24
+    resolution_time_hours: 72
+    escalation_after: ${dt.add:${dt.now:},1,0,0,0}

@@ -1,0 +1,115 @@
+# -*- coding:utf-8 -*-
+"""
+ClickHouse database connection and operations
+"""
+
+import pandas as pd
+from sqlalchemy import Engine, create_engine
+
+from ..utils import logger
+from ..utils.vault import Secret
+from .base import BaseDB
+
+
+class Clickhouse(BaseDB):
+    DB_TYPE = "clickhouse"
+    default_schema = "default"
+    default_secret_name = "clickhouse"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.schema = self.database
+
+    @classmethod
+    def create_engine(cls, secret: Secret, database, schema, *args, **kwargs) -> Engine:
+        engine = create_engine(
+            f"clickhouse+native://{secret.user}:{secret.password}@{secret.host}:{secret.port}/{database}",
+            **kwargs,
+        )
+        return engine
+
+    def to_sql(
+        self,
+        df: pd.DataFrame,
+        table: str,
+        schema: str = None,
+    ):
+        table = table.lower()
+        schema = schema or self.schema
+
+        to_sql_parameters = {
+            "name": table,
+            "schema": schema,
+            "con": self.engine,
+            "index": False,
+            "if_exists": "append",
+            "chunksize": 1000,
+        }
+        df.to_sql(**to_sql_parameters)
+
+    def ensure_table(
+        self,
+        table: str,
+        schema: str,
+        dtype: dict,
+        primary_keys: list = None,
+        partition_keys: list = None,
+        ck_engine: str = None,
+    ):
+        if not self.is_table_exists(schema=schema, table=table):
+            sql = f"""
+                CREATE TABLE IF NOT EXISTS {schema or self.schema}.{table} 
+                ({", ".join([f"`{k}` {v}" for k, v in dtype.items()])} ) 
+                ENGINE = {ck_engine or "MergeTree"}() 
+                """
+            if partition_keys:
+                sql += f" PARTITION BY ({','.join(partition_keys)}) "
+            sql += f""" PRIMARY KEY ({",".join(primary_keys)}) ORDER BY ({",".join(primary_keys)}) """
+            logger.info(f"create Clickhouse Table: {sql}")
+            self.execute(sql)
+
+    @classmethod
+    def get_df_dtypes(cls, df: pd.DataFrame) -> dict:
+        """Get dtypes of a dataframe"""
+        return {k: cls.get_dtype(v) for k, v in df.dtypes.to_dict().items()}
+
+    @classmethod
+    def get_dtype(cls, dtype: str) -> str:
+        """
+        将 Pandas dtype 转换为 ClickHouse type
+        Args:
+            dtype (str): Pandas dtype
+        Returns:
+            str: ClickHouse type
+        """
+        dtype = str(dtype)
+        if dtype == "object":
+            return "String"
+        elif dtype.startswith("int"):
+            return f"Int{dtype[3:]}"
+        elif dtype.startswith("uint"):
+            return f"UInt{dtype[4:]}"
+        elif dtype.startswith("float"):
+            return f"Float{dtype[5:]}"
+        elif dtype == "bool":
+            return "UInt8"
+        elif dtype.startswith("datetime"):
+            return "DateTime"
+        elif dtype == "timedelta":
+            return "Int64"
+        elif dtype == "category":
+            return "String"
+        else:
+            raise ValueError(f"Invalid dtype '{dtype}'")
+
+    def ensure_primary_key(self, *args, **kwargs):
+        raise AttributeError("No primary key change allowed in clickhouse")
+
+    def check_varchar_length(self, *args, **kwargs):
+        raise AttributeError("No varchar length check allowed in clickhouse")
+
+    def change_column(self, *args, **kwargs):
+        raise AttributeError("No column change allowed in clickhouse")
+
+    def truncate(self, *args, **kwargs):
+        raise AttributeError("No truncate allowed in clickhouse")
