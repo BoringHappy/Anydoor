@@ -1,7 +1,10 @@
+import pytest
+
 from anydoor.dbs.postgres import Postgres
 from anydoor.utils.cache import cache_db
 
 
+@pytest.mark.skip(reason="No Postgres")
 def test_cache_db():
     schema = "test"
     table = "test_cache"

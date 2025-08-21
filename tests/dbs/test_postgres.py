@@ -1,8 +1,10 @@
 import pandas as pd
+import pytest
 
 from anydoor.dbs import Postgres
 
 
+@pytest.mark.skip(reason="No Postgres")
 def test_to_sql():
     schema = "test"
     table = "test_unit"
