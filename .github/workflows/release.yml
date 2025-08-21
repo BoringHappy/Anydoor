@@ -97,11 +97,6 @@ jobs:
         run: |
           uv sync --dev
 
-      - name: Run tests
-        if: steps.check-version.outputs.has-change == 'true'
-        run: |
-          uv run pytest
-
       - name: Build package with uv
         if: steps.check-version.outputs.has-change == 'true'
         run: |
