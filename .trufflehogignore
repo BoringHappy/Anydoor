@@ -62,6 +62,9 @@ docs/_build/
 .env.test
 .env.production
 
+# 安全扫描文件
+.secrets.baseline
+
 # 其他
 .git/
 .github/
