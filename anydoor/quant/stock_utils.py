@@ -3,13 +3,6 @@
 Stock utility functions for market data processing
 """
 
-from functools import lru_cache
-
-import pandas as pd
-from loguru import logger
-
-from ..dbs.postgres import Postgres
-
 sh_head = ("50", "51", "60", "90", "110", "113", "132", "204", "5", "6", "9", "7")
 
 
@@ -31,25 +24,3 @@ def get_stock_type(stock_code):
         return (
             "sh" + stock_code if stock_code.startswith(sh_head) else "sz" + stock_code
         )
-
-
-@lru_cache()
-def get_trade_cal():
-    engine = Postgres(database="stock", schema="crawl")
-    df = pd.read_sql("select * from crawl.trade_cal", con=engine.engine)
-    return df.sort_values("trade_cal")
-
-
-@lru_cache()
-def is_trade_date(select_day=None):
-    from datetime import date
-
-    select_day = select_day or str(date.today())
-
-    trade_days = [i.strftime("%Y-%m-%d") for i in get_trade_cal().trade_cal.to_list()]
-    if select_day in trade_days:
-        logger.info(f"{select_day} 交易日")
-        return True
-    else:
-        logger.info(f"{select_day} 非交易日")
-        return False
