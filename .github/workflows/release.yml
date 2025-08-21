@@ -18,7 +18,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v1
@@ -51,7 +51,16 @@ jobs:
       - name: Get previous version
         id: get-previous-version
         run: |
-          PREVIOUS_VERSION=$(git show HEAD~1:pyproject.toml | uv run python get_version.py)
+          echo "Git log for pyproject.toml changes:"
+          git log --oneline --follow -- pyproject.toml | head -5
+          
+          echo "Current pyproject.toml content:"
+          cat pyproject.toml | grep -A 2 -B 2 "version"
+          
+          echo "Previous commit pyproject.toml content:"
+          git show HEAD~1:pyproject.toml | grep -A 2 -B 2 "version" || echo "No previous version found"
+          
+          PREVIOUS_VERSION=$(git show HEAD~1:pyproject.toml | uv run python get_version.py 2>/dev/null || echo "unknown")
           echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
           echo "Previous version: $PREVIOUS_VERSION"
 
@@ -61,7 +70,15 @@ jobs:
           CURRENT_VERSION="${{ steps.get-version.outputs.version }}"
           PREVIOUS_VERSION="${{ steps.get-previous-version.outputs.previous_version }}"
           
-          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+          echo "Comparing versions:"
+          echo "  Current: '$CURRENT_VERSION'"
+          echo "  Previous: '$PREVIOUS_VERSION'"
+          
+          # Check if this is a new version or if previous version is unknown
+          if [ "$PREVIOUS_VERSION" = "unknown" ] || [ "$PREVIOUS_VERSION" = "" ]; then
+            echo "has-change=true" >> $GITHUB_OUTPUT
+            echo "New version detected: $CURRENT_VERSION (no previous version found)"
+          elif [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
             echo "has-change=true" >> $GITHUB_OUTPUT
             echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
           else
