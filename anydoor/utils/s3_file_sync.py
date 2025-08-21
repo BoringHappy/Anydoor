@@ -1,7 +1,6 @@
 import os
 import shutil
 from contextlib import contextmanager
-from functools import lru_cache
 
 from cloudpathlib import S3Client
 from loguru import logger

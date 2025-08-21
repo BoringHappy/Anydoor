@@ -1,0 +1,11 @@
+{
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/.mypy_cache": true,
+        "**/.ruff_cache": true,
+        "**/*.pyc": true,
+        "**/*.pyo": true
+    },
+    "explorer.excludeGitIgnore": false
+}

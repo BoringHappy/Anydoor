@@ -2,7 +2,7 @@ import os
 
 from deltalake import DeltaTable
 
-from ..utils.vault import Secret, Vault
+from ..utils.vault import Vault
 
 
 class Delta:

@@ -1,18 +1,22 @@
-def init_spark(
-    driver_memory="4g",
-    executor_memory="4g",
-    warehouse_location="/data/lake",
-    ivy_location="/data/lake/.ivy",
-):
-    from pyspark.sql import SparkSession
+from typing import Any, List
 
-    packages = [
+
+def init_spark(
+    driver_memory: str = "4g",
+    executor_memory: str = "4g",
+    warehouse_location: str = "/data/lake",
+    ivy_location: str = "/data/lake/.ivy",
+    spark_jars_packages: List[str] = [
         "io.delta:delta-spark_2.12:3.2.1",
         "io.unitycatalog:unitycatalog-spark_2.12:0.2.0",
-    ]
+    ],
+) -> Any:
+    from pyspark.sql import SparkSession  # type: ignore[import-not-found]
 
     spark = (
-        SparkSession.builder.config("spark.jars.packages", ",".join(packages))
+        SparkSession.builder.config(
+            "spark.jars.packages", ",".join(spark_jars_packages)
+        )
         .config("spark.driver.extraJavaOptions", "-Djava.security.manager=allow")
         .config("spark.executor.extraJavaOptions", "-Djava.security.manager=allow")
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")

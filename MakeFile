@@ -1,2 +1,0 @@
-bump:
-	uv version --bump patch
