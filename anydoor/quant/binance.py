@@ -254,4 +254,3 @@ if __name__ == "__main__":
     logger.info(f"localtime start:{datetime.now()}")
 
     logger.info(f"localtime end:{datetime.now()}")
-    logger.info(f"localtime end:{datetime.now()}")
