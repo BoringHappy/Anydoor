@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, Dict, List
 
 
 def init_spark(
@@ -10,25 +10,33 @@ def init_spark(
         "io.delta:delta-spark_2.12:3.2.1",
         "io.unitycatalog:unitycatalog-spark_2.12:0.2.0",
     ],
+    spark_config: Dict[str, str] = {},
 ) -> Any:
+    from pyspark import SparkConf  # type: ignore[import-not-found]
     from pyspark.sql import SparkSession  # type: ignore[import-not-found]
 
-    spark = (
-        SparkSession.builder.config(
-            "spark.jars.packages", ",".join(spark_jars_packages)
-        )
-        .config("spark.driver.extraJavaOptions", "-Djava.security.manager=allow")
-        .config("spark.executor.extraJavaOptions", "-Djava.security.manager=allow")
-        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-        .config(
-            "spark.sql.catalog.spark_catalog",
-            "org.apache.spark.sql.delta.catalog.DeltaCatalog",
-        )
-        .config("spark.driver.memory", driver_memory)
-        .config("spark.executor.memory", executor_memory)
-        .config("spark.driver.maxResultsSize", "0")
-        .config("spark.sql.warehouse.dir", warehouse_location)
-        .config("spark.jars.ivy", ivy_location)
-        .getOrCreate()
+    # Create SparkConf object
+    conf = SparkConf()
+
+    # Set all configurations
+    conf.set("spark.jars.packages", ",".join(spark_jars_packages))
+    conf.set("spark.driver.extraJavaOptions", "-Djava.security.manager=allow")
+    conf.set("spark.executor.extraJavaOptions", "-Djava.security.manager=allow")
+    conf.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+    conf.set(
+        "spark.sql.catalog.spark_catalog",
+        "org.apache.spark.sql.delta.catalog.DeltaCatalog",
     )
+    conf.set("spark.driver.memory", driver_memory)
+    conf.set("spark.executor.memory", executor_memory)
+    conf.set("spark.driver.maxResultsSize", "0")
+    conf.set("spark.sql.warehouse.dir", warehouse_location)
+    conf.set("spark.jars.ivy", ivy_location)
+
+    # Set additional configurations from spark_config parameter
+    for key, value in spark_config.items():
+        conf.set(key, value)
+
+    # Create SparkSession with the configuration
+    spark = SparkSession.builder.config(conf=conf).getOrCreate()
     return spark
