@@ -1,10 +1,10 @@
 import pandas as pd
-import pytest
 
 from anydoor.dbs import Clickhouse
+from tests.decorators import require_env
 
 
-@pytest.mark.skip(reason="No Clickhouse")
+@require_env("CLICKHOUSE_ENABLED", reason="Clickhouse is not enabled")
 def test_to_sql():
     schema = "default"
     table = "test_unit"
