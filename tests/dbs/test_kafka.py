@@ -3,6 +3,7 @@
 """
 
 import json
+import time
 from datetime import datetime
 from unittest.mock import Mock, patch
 
@@ -19,6 +20,7 @@ from anydoor.dbs.kafka import (
     PydanticAvroSerializer,
     StringSerializer,
 )
+from tests.decorators import require_env
 
 # Test schemas for Avro serialization
 USER_SCHEMA = {
@@ -453,6 +455,396 @@ class TestCustomSerializer:
         """测试BaseSerializer是抽象类"""
         with pytest.raises(TypeError):
             BaseSerializer()  # 不能直接实例化抽象类
+
+
+# Integration Tests (require actual Kafka instance)
+class TestKafkaIntegration:
+    """Kafka集成测试 - 需要实际的Kafka实例"""
+
+    @classmethod
+    def setup_class(cls):
+        """设置测试类"""
+        cls.bootstrap_servers = "localhost:9092"
+        cls.test_topic = "test-integration-topic"
+        cls.test_group = "test-integration-group"
+
+        # 清理可能存在的测试数据
+        try:
+            admin_client = Kafka.get_admin_client(cls.bootstrap_servers)
+            # 删除测试主题（如果存在）
+            from confluent_kafka.admin import NewTopic
+
+            admin_client.delete_topics([cls.test_topic], operation_timeout=10)
+            time.sleep(2)  # 等待删除完成
+        except Exception:
+            pass  # 忽略删除错误
+
+    @require_env(
+        "UNITTEST_KAFKA_ENABLED",
+        reason="Kafka integration tests are disabled. Set UNITTEST_KAFKA_ENABLED=true to enable.",
+    )
+    def test_producer_consumer_integration(self):
+        """测试生产者和消费者集成"""
+        # 创建生产者
+        producer = Kafka.get_producer(self.bootstrap_servers)
+
+        # 发送测试消息
+        test_messages = [
+            {"id": 1, "message": "Hello Kafka 1"},
+            {"id": 2, "message": "Hello Kafka 2"},
+            {"id": 3, "message": "Hello Kafka 3"},
+        ]
+
+        for msg in test_messages:
+            producer.produce(
+                self.test_topic,
+                key=f"key-{msg['id']}",
+                value=json.dumps(msg).encode("utf-8"),
+            )
+
+        # 确保消息发送完成
+        producer.flush(10)
+
+        # 创建消费者
+        consumer = Kafka.get_consumer(
+            self.bootstrap_servers,
+            [self.test_topic],
+            self.test_group,
+            {"auto.offset.reset": "earliest"},
+        )
+
+        # 消费消息
+        consumed_messages = []
+        start_time = time.time()
+        timeout = 30  # 30秒超时
+
+        while (
+            len(consumed_messages) < len(test_messages)
+            and (time.time() - start_time) < timeout
+        ):
+            msg = consumer.poll(1.0)
+            if msg is None:
+                continue
+
+            if msg.error():
+                pytest.fail(f"Consumer error: {msg.error()}")
+
+            # 解析消息
+            key = msg.key().decode("utf-8") if msg.key() else None
+            value = json.loads(msg.value().decode("utf-8")) if msg.value() else None
+
+            consumed_messages.append({"key": key, "value": value})
+
+        consumer.close()
+
+        # 验证消息
+        assert len(consumed_messages) == len(test_messages)
+
+        # 验证消息内容
+        consumed_values = [msg["value"] for msg in consumed_messages]
+        for original_msg in test_messages:
+            assert original_msg in consumed_values
+
+    @require_env(
+        "UNITTEST_KAFKA_ENABLED",
+        reason="Kafka integration tests are disabled. Set UNITTEST_KAFKA_ENABLED=true to enable.",
+    )
+    def test_kafka_client_integration(self):
+        """测试KafkaClient集成功能"""
+        client = KafkaClient(
+            bootstrap_servers=self.bootstrap_servers,
+            key_serializer=StringSerializer(),
+            value_serializer=JSONSerializer(),
+        )
+
+        # 测试数据
+        test_data = [
+            {
+                "key": "user-1",
+                "value": {"id": 1, "name": "张三", "email": "zhang@example.com"},
+            },
+            {
+                "key": "user-2",
+                "value": {"id": 2, "name": "李四", "email": "li@example.com"},
+            },
+            {
+                "key": "user-3",
+                "value": {"id": 3, "name": "王五", "email": "wang@example.com"},
+            },
+        ]
+
+        # 使用专用topic避免与其他测试冲突
+        test_topic = f"{self.test_topic}-client"
+
+        # 生产消息
+        for item in test_data:
+            client.produce(
+                topic=test_topic,
+                key=item["key"],
+                value=item["value"],
+                headers={
+                    "content-type": "application/json",
+                    "source": "integration-test",
+                },
+            )
+
+        # 刷新确保消息发送
+        client.flush(10)
+
+        # 消费消息
+        consumed_data = []
+        for msg in client.consume(
+            topics=[test_topic],
+            group_id=f"{self.test_group}-client",
+            config={"auto.offset.reset": "earliest"},
+            timeout=2.0,
+            max_messages=len(test_data),
+        ):
+            consumed_data.append(
+                {
+                    "key": msg["key"],
+                    "value": msg["value"],
+                    "headers": msg["headers"],
+                }
+            )
+
+        client.close()
+
+        # 验证消息数量
+        assert len(consumed_data) == len(test_data)
+
+        # 验证消息内容
+        for original_item in test_data:
+            found = False
+            for consumed_item in consumed_data:
+                if (
+                    consumed_item["key"] == original_item["key"]
+                    and consumed_item["value"] == original_item["value"]
+                ):
+                    # 验证headers
+                    assert (
+                        consumed_item["headers"]["content-type"] == "application/json"
+                    )
+                    assert consumed_item["headers"]["source"] == "integration-test"
+                    found = True
+                    break
+            assert found, f"Message not found: {original_item}"
+
+    @require_env(
+        "UNITTEST_KAFKA_ENABLED",
+        reason="Kafka integration tests are disabled. Set UNITTEST_KAFKA_ENABLED=true to enable.",
+    )
+    def test_avro_serialization_integration(self):
+        """测试Avro序列化集成"""
+        # 使用用户schema进行测试
+        avro_serializer = AvroSerializer(schema=USER_SCHEMA)
+
+        client = KafkaClient(
+            bootstrap_servers=self.bootstrap_servers,
+            key_serializer=StringSerializer(),
+            value_serializer=avro_serializer,
+        )
+
+        # 测试用户数据
+        test_users = [
+            {
+                "id": 100,
+                "name": "测试用户1",
+                "email": "test1@example.com",
+                "age": 25,
+                "active": True,
+            },
+            {
+                "id": 101,
+                "name": "测试用户2",
+                "email": "test2@example.com",
+                "age": None,  # 测试null值
+                "active": False,
+            },
+        ]
+
+        # 使用专用topic避免与其他测试冲突
+        test_topic = f"{self.test_topic}-avro"
+
+        # 生产Avro消息
+        for user in test_users:
+            client.produce(
+                topic=test_topic,
+                key=f"user-{user['id']}",
+                value=user,
+            )
+
+        client.flush(10)
+
+        # 消费Avro消息
+        consumed_users = []
+        for msg in client.consume(
+            topics=[test_topic],
+            group_id=f"{self.test_group}-avro",
+            config={"auto.offset.reset": "earliest"},
+            timeout=2.0,
+            max_messages=len(test_users),
+        ):
+            consumed_users.append(
+                {
+                    "key": msg["key"],
+                    "value": msg["value"],
+                }
+            )
+
+        client.close()
+
+        # 验证Avro反序列化结果
+        assert len(consumed_users) == len(test_users)
+
+        for original_user in test_users:
+            found = False
+            for consumed in consumed_users:
+                if consumed["key"] == f"user-{original_user['id']}":
+                    consumed_user = consumed["value"]
+                    assert consumed_user["id"] == original_user["id"]
+                    assert consumed_user["name"] == original_user["name"]
+                    assert consumed_user["email"] == original_user["email"]
+                    assert consumed_user["age"] == original_user["age"]
+                    assert consumed_user["active"] == original_user["active"]
+                    found = True
+                    break
+            assert found, f"User not found: {original_user}"
+
+    @require_env(
+        "UNITTEST_KAFKA_ENABLED",
+        reason="Kafka integration tests are disabled. Set UNITTEST_KAFKA_ENABLED=true to enable.",
+    )
+    def test_pydantic_avro_integration(self):
+        """测试pydantic-avro集成"""
+        try:
+            from pydantic_avro import AvroBase
+        except ImportError:
+            pytest.skip("pydantic-avro not available")
+
+        # 定义测试模型
+        from typing import Optional
+
+        class TestUser(AvroBase):
+            id: int
+            name: str
+            email: str
+            age: Optional[int] = None
+            active: bool = True
+
+        # 创建客户端
+        client = KafkaClient(
+            bootstrap_servers=self.bootstrap_servers,
+            key_serializer=StringSerializer(),
+            value_serializer=PydanticAvroSerializer(TestUser),
+        )
+
+        # 创建测试用户
+        test_users = [
+            TestUser(
+                id=200, name="Pydantic用户1", email="pydantic1@example.com", age=30
+            ),
+            TestUser(
+                id=201,
+                name="Pydantic用户2",
+                email="pydantic2@example.com",
+                active=False,
+            ),
+        ]
+
+        # 使用专用topic避免与其他测试冲突
+        test_topic = f"{self.test_topic}-pydantic"
+
+        # 生产消息
+        for user in test_users:
+            client.produce(
+                topic=test_topic,
+                key=f"pydantic-user-{user.id}",
+                value=user,
+            )
+
+        client.flush(10)
+
+        # 消费消息，使用相同的序列化器配置
+        consumed_users = []
+
+        # 创建新的客户端用于消费，使用相同的PydanticAvroSerializer配置
+        consumer_client = KafkaClient(
+            bootstrap_servers=self.bootstrap_servers,
+            key_serializer=StringSerializer(),
+            value_serializer=PydanticAvroSerializer(TestUser),  # 指定model_class
+        )
+
+        for msg in consumer_client.consume(
+            topics=[test_topic],
+            group_id=f"{self.test_group}-pydantic",
+            config={"auto.offset.reset": "earliest"},
+            timeout=2.0,
+            max_messages=len(test_users),
+        ):
+            consumed_users.append(
+                {
+                    "key": msg["key"],
+                    "value": msg["value"],  # 这里应该是TestUser实例
+                }
+            )
+
+        consumer_client.close()
+        client.close()
+
+        # 验证数据
+        assert len(consumed_users) == len(test_users)
+
+        # 验证消费的用户数据
+        for original_user in test_users:
+            found = False
+            for consumed in consumed_users:
+                if consumed["key"] == f"pydantic-user-{original_user.id}":
+                    consumed_user = consumed["value"]
+                    # 验证这是一个TestUser实例
+                    assert isinstance(consumed_user, TestUser)
+                    assert consumed_user.id == original_user.id
+                    assert consumed_user.name == original_user.name
+                    assert consumed_user.email == original_user.email
+                    assert consumed_user.age == original_user.age
+                    assert consumed_user.active == original_user.active
+                    found = True
+                    break
+            assert found, f"User not found: {original_user}"
+
+    @require_env(
+        "UNITTEST_KAFKA_ENABLED",
+        reason="Kafka integration tests are disabled. Set UNITTEST_KAFKA_ENABLED=true to enable.",
+    )
+    def test_error_handling_integration(self):
+        """测试错误处理集成"""
+        # 测试无效的bootstrap servers
+        with pytest.raises(Exception):  # KafkaException或其他连接异常
+            Kafka.get_producer("invalid:9999", validate_connection=True)
+
+        # 测试生产者超时
+        producer = Kafka.get_producer(self.bootstrap_servers, validate_connection=False)
+
+        # 测试无效主题名（包含无效字符）
+        try:
+            producer.produce("invalid/topic/name", value=b"test")
+            producer.flush(1)  # 短超时来快速失败
+        except Exception:
+            pass  # 预期会有异常
+
+        # 测试消费者错误处理
+        consumer = Kafka.get_consumer(
+            self.bootstrap_servers,
+            ["non-existent-topic"],
+            "error-test-group",
+            validate_connection=False,
+        )
+
+        # 尝试消费不存在的主题（应该不会立即失败，但也不会收到消息）
+        msg = consumer.poll(1.0)
+        assert msg is None or msg.error()  # 要么没消息，要么有错误
+
+        consumer.close()
 
 
 if __name__ == "__main__":

@@ -243,7 +243,6 @@ class KafkaConfig:
         "retries": 3,
         "batch.size": 16384,
         "linger.ms": 1,
-        "buffer.memory": 33554432,
         "compression.type": "snappy",
         "max.in.flight.requests.per.connection": 5,
         "enable.idempotence": True,
@@ -254,10 +253,6 @@ class KafkaConfig:
         "enable.auto.commit": True,
         "auto.commit.interval.ms": 1000,
         "session.timeout.ms": 30000,
-        "heartbeat.interval.ms": 3000,
-        "max.poll.records": 500,
-        "fetch.min.bytes": 1,
-        "fetch.max.wait.ms": 500,
     }
 
     @classmethod
@@ -602,14 +597,25 @@ class KafkaClient:
                     for k, v in headers.items()
                 }
 
-            producer.produce(
-                topic=topic,
-                value=serialized_value,
-                key=serialized_key,
-                partition=partition,
-                headers=serialized_headers,
-                callback=callback,
-            )
+            # 构建produce参数，只传递非None的值
+            produce_kwargs = {
+                "topic": topic,
+                "value": serialized_value,
+            }
+
+            if serialized_key is not None:
+                produce_kwargs["key"] = serialized_key
+
+            if partition is not None:
+                produce_kwargs["partition"] = partition
+
+            if serialized_headers is not None:
+                produce_kwargs["headers"] = serialized_headers
+
+            if callback is not None:
+                produce_kwargs["callback"] = callback
+
+            producer.produce(**produce_kwargs)
 
         except Exception as e:
             logger.error(f"Failed to produce message to topic '{topic}': {e}")
