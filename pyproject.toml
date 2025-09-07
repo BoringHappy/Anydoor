@@ -1,7 +1,7 @@
 [project]
 authors = [{ name = "veinkr", email = "veinkr.finch@gmail.com" }]
 name = "anydoor"
-version = "0.2.2"
+version = "0.2.3"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -9,6 +9,7 @@ requires-python = ">=3.12"
 
 dependencies = [
     "aiohttp>=3.12.0",
+    "avro>=1.12.0",
     "boto3>=1.37.16",
     "bs4>=0.0.2",
     "clickhouse-sqlalchemy>=0.3.2",
