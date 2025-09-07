@@ -1,7 +1,7 @@
 [project]
 authors = [{ name = "veinkr", email = "veinkr.finch@gmail.com" }]
 name = "anydoor"
-version = "0.2.4"
+version = "0.2.5"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -9,7 +9,7 @@ requires-python = ">=3.12"
 
 dependencies = [
     "aiohttp>=3.12.0",
-    "avro>=1.12.0",
+    "avro-python3>=1.10.2",
     "boto3>=1.37.16",
     "bs4>=0.0.2",
     "clickhouse-sqlalchemy>=0.3.2",
@@ -17,6 +17,7 @@ dependencies = [
     "confluent-kafka>=2.8.2",
     "dateparser>=1.2.2",
     "deltalake>=0.25.4",
+    "fastavro>=1.12.0",
     "func-timeout>=4.3.5",
     "hatchling>=1.27.0",
     "hvac>=2.3.0",
@@ -32,7 +33,9 @@ dependencies = [
     "psycopg2-binary>=2.9.9",
     "pyarrow>=21.0.0",
     "pydantic>=2.11.7",
+    "pydantic-avro>=0.9.0",
     "redis>=5.2.1",
+    "requests>=2.32.4",
     "sqlalchemy>=2.0.39",
     "tenacity>=9.0.0",
     "tqdm>=4.67.1",

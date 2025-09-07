@@ -1,5 +1,14 @@
 from .clickhouse import Clickhouse
-from .kafka import Kafka
+from .kafka import (
+    AvroSerializer,
+    BaseSerializer,
+    BytesSerializer,
+    JSONSerializer,
+    Kafka,
+    KafkaClient,
+    PydanticAvroSerializer,
+    StringSerializer,
+)
 from .postgres import Postgres
 from .spark import init_spark
 from .sql_runner import SQLRunner
@@ -11,5 +20,12 @@ __all__ = (
     "Sqlite",
     "SQLRunner",
     "Kafka",
+    "KafkaClient",
+    "BaseSerializer",
+    "JSONSerializer",
+    "StringSerializer",
+    "BytesSerializer",
+    "AvroSerializer",
+    "PydanticAvroSerializer",
     "init_spark",
 )
