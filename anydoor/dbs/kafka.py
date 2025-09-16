@@ -225,7 +225,7 @@ class PydanticAvroSerializer(AvroSerializer):
         # Initialize parent with dummy schema to avoid validation error
         # Real schema will be determined at serialize/deserialize time
         dummy_schema = {"type": "null"} if not model_class else None
-        if model_class and hasattr(model_class, 'avro_schema'):
+        if model_class and hasattr(model_class, "avro_schema"):
             try:
                 dummy_schema = model_class.avro_schema()
             except Exception:
@@ -471,7 +471,9 @@ class Kafka:
                     )
                 except Exception as e:
                     logger.error(f"Connection validation failed: {e}")
-                    raise KafkaException(f"Admin client connection validation failed: {e}")
+                    raise KafkaException(
+                        f"Admin client connection validation failed: {e}"
+                    )
 
             return admin_client
 
@@ -772,10 +774,10 @@ class KafkaClient:
 
         try:
             for msg in messages:
-                value = msg.get('value')
-                key = msg.get('key')
-                partition = msg.get('partition')
-                headers = msg.get('headers')
+                value = msg.get("value")
+                key = msg.get("key")
+                partition = msg.get("partition")
+                headers = msg.get("headers")
 
                 # Use the existing produce method without auto-flush
                 original_auto_flush = self.auto_flush
@@ -786,7 +788,7 @@ class KafkaClient:
                     value=value,
                     key=key,
                     partition=partition,
-                    headers=headers
+                    headers=headers,
                 )
 
                 self.auto_flush = original_auto_flush  # Restore setting
@@ -860,15 +862,17 @@ class KafkaClient:
                             for k, v in msg.headers()
                         }
 
-                    batch.append({
-                        "topic": msg.topic(),
-                        "partition": msg.partition(),
-                        "offset": msg.offset(),
-                        "key": key,
-                        "value": value,
-                        "headers": headers,
-                        "timestamp": msg.timestamp(),
-                    })
+                    batch.append(
+                        {
+                            "topic": msg.topic(),
+                            "partition": msg.partition(),
+                            "offset": msg.offset(),
+                            "key": key,
+                            "value": value,
+                            "headers": headers,
+                            "timestamp": msg.timestamp(),
+                        }
+                    )
 
                     # Yield batch when it reaches desired size
                     if len(batch) >= batch_size:
