@@ -2,9 +2,10 @@ import pandas as pd
 import pytest
 
 from anydoor.dbs import Postgres
+from tests.decorators import require_env
 
 
-@pytest.mark.skip(reason="No Postgres")
+@require_env("UNITTEST_POSTGRES_ENABLED", reason="Postgres is not enabled")
 def test_to_sql():
     schema = "test"
     table = "test_unit"

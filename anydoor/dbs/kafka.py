@@ -1,10 +1,12 @@
 import json
+import time
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Union
 
 import fastavro
+import orjson
 import pydantic_avro  # noqa: F401
 from confluent_kafka import Consumer, Producer
 from confluent_kafka.admin import AdminClient
@@ -27,24 +29,31 @@ class BaseSerializer(ABC):
 
 
 class JSONSerializer(BaseSerializer):
-    """JSON serializer for Kafka messages"""
+    """JSON serializer for Kafka messages with orjson optimization"""
 
-    def __init__(self, encoding: str = "utf-8"):
+    def __init__(self, encoding: str = "utf-8", use_orjson: bool = True):
         self.encoding = encoding
+        self.use_orjson = use_orjson
 
     def serialize(self, data: Any) -> bytes:
         """Serialize data to JSON bytes"""
         try:
-            json_str = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-            return json_str.encode(self.encoding)
+            if self.use_orjson:
+                return orjson.dumps(data)
+            else:
+                json_str = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+                return json_str.encode(self.encoding)
         except (TypeError, ValueError) as e:
             raise ValueError(f"Failed to serialize data to JSON: {e}")
 
     def deserialize(self, data: bytes) -> Any:
         """Deserialize JSON bytes to data"""
         try:
-            json_str = data.decode(self.encoding)
-            return json.loads(json_str)
+            if self.use_orjson:
+                return orjson.loads(data)
+            else:
+                json_str = data.decode(self.encoding)
+                return json.loads(json_str)
         except (UnicodeDecodeError, json.JSONDecodeError) as e:
             raise ValueError(f"Failed to deserialize JSON data: {e}")
 
@@ -84,7 +93,7 @@ class BytesSerializer(BaseSerializer):
 
 
 class AvroSerializer(BaseSerializer):
-    """Avro serializer for Kafka messages with schema support"""
+    """Avro serializer for Kafka messages with schema support and caching"""
 
     def __init__(
         self, schema: Optional[Dict] = None, schema_registry_url: Optional[str] = None
@@ -98,6 +107,11 @@ class AvroSerializer(BaseSerializer):
         """
         self.schema = schema
         self.schema_registry_url = schema_registry_url
+
+        # Cache for BytesIO objects and schemas
+        self._bytes_writer_cache = BytesIO()
+        self._bytes_reader_cache = BytesIO()
+        self._schema_cache = {}
 
         if schema_registry_url:
             try:
@@ -128,8 +142,8 @@ class AvroSerializer(BaseSerializer):
             else:
                 # Use schemaless mode with fastavro
                 if hasattr(data, "avro_schema"):
-                    # Handle pydantic-avro models
-                    schema = data.avro_schema()
+                    # Handle pydantic-avro models with schema caching
+                    schema = self._get_cached_schema(type(data))
                     data_dict = (
                         data.model_dump()
                         if hasattr(data, "model_dump")
@@ -163,8 +177,8 @@ class AvroSerializer(BaseSerializer):
             else:
                 # Use schemaless mode with fastavro
                 if model_class and hasattr(model_class, "avro_schema"):
-                    # Deserialize to pydantic-avro model
-                    schema = model_class.avro_schema()
+                    # Deserialize to pydantic-avro model with schema caching
+                    schema = self._get_cached_schema(model_class)
                     data_dict = self._deserialize_with_schema(data, schema)
                     return model_class(**data_dict)
                 elif self.schema:
@@ -177,15 +191,23 @@ class AvroSerializer(BaseSerializer):
             raise ValueError(f"Failed to deserialize Avro data: {e}")
 
     def _serialize_with_schema(self, data: Any, schema: Dict) -> bytes:
-        """Serialize data with given schema using fastavro"""
-        bytes_writer = BytesIO()
-        fastavro.schemaless_writer(bytes_writer, schema, data)
-        return bytes_writer.getvalue()
+        """Serialize data with given schema using fastavro with object reuse"""
+        self._bytes_writer_cache.seek(0)
+        self._bytes_writer_cache.truncate()
+        fastavro.schemaless_writer(self._bytes_writer_cache, schema, data)
+        return self._bytes_writer_cache.getvalue()
 
     def _deserialize_with_schema(self, data: bytes, schema: Dict) -> Any:
-        """Deserialize data with given schema using fastavro"""
-        bytes_reader = BytesIO(data)
-        return fastavro.schemaless_reader(bytes_reader, schema)
+        """Deserialize data with given schema using fastavro with object reuse"""
+        self._bytes_reader_cache = BytesIO(data)
+        return fastavro.schemaless_reader(self._bytes_reader_cache, schema)
+
+    def _get_cached_schema(self, model_class: type) -> Dict:
+        """Get schema from cache or compute and cache it"""
+        class_name = f"{model_class.__module__}.{model_class.__name__}"
+        if class_name not in self._schema_cache:
+            self._schema_cache[class_name] = model_class.avro_schema()
+        return self._schema_cache[class_name]
 
 
 class PydanticAvroSerializer(AvroSerializer):
@@ -200,7 +222,16 @@ class PydanticAvroSerializer(AvroSerializer):
         """
 
         self.model_class = model_class
-        # Don't call super().__init__() as we handle schema differently
+        # Initialize parent with dummy schema to avoid validation error
+        # Real schema will be determined at serialize/deserialize time
+        dummy_schema = {"type": "null"} if not model_class else None
+        if model_class and hasattr(model_class, 'avro_schema'):
+            try:
+                dummy_schema = model_class.avro_schema()
+            except Exception:
+                dummy_schema = {"type": "null"}
+
+        super().__init__(schema=dummy_schema)
 
     def serialize(self, data: Any) -> bytes:
         """Serialize pydantic-avro model to Avro bytes"""
@@ -241,11 +272,13 @@ class KafkaConfig:
     DEFAULT_PRODUCER_CONFIG = {
         "acks": "all",
         "retries": 3,
-        "batch.size": 16384,
-        "linger.ms": 1,
+        "batch.size": 32768,  # Increased for better throughput
+        "linger.ms": 5,  # Increased for better batching
         "compression.type": "snappy",
         "max.in.flight.requests.per.connection": 5,
         "enable.idempotence": True,
+        "request.timeout.ms": 30000,
+        "delivery.timeout.ms": 120000,
     }
 
     DEFAULT_CONSUMER_CONFIG = {
@@ -311,11 +344,15 @@ class Kafka:
             producer = Producer(producer_config)
 
             if validate_connection:
-                # Test connection by getting cluster metadata
-                metadata = producer.list_topics(timeout=5)
-                logger.info(
-                    f"Connected to Kafka cluster with {len(metadata.brokers)} brokers"
-                )
+                # Test connection by getting cluster metadata (with shorter timeout)
+                try:
+                    metadata = producer.list_topics(timeout=2)  # Reduced timeout
+                    logger.debug(
+                        f"Connected to Kafka cluster with {len(metadata.brokers)} brokers"
+                    )
+                except Exception as e:
+                    logger.error(f"Connection validation failed: {e}")
+                    raise KafkaException(f"Producer connection validation failed: {e}")
 
             return producer
 
@@ -374,12 +411,16 @@ class Kafka:
             consumer.subscribe(topic_list)
 
             if validate_connection:
-                # Test connection by getting cluster metadata
-                metadata = consumer.list_topics(timeout=5)
-                logger.info(
-                    f"Consumer connected to Kafka cluster with {len(metadata.brokers)} brokers"
-                )
-                logger.info(f"Subscribed to topics: {topic_list}")
+                # Test connection by getting cluster metadata (with shorter timeout)
+                try:
+                    metadata = consumer.list_topics(timeout=2)  # Reduced timeout
+                    logger.debug(
+                        f"Consumer connected to Kafka cluster with {len(metadata.brokers)} brokers"
+                    )
+                    logger.debug(f"Subscribed to topics: {topic_list}")
+                except Exception as e:
+                    logger.error(f"Connection validation failed: {e}")
+                    raise KafkaException(f"Consumer connection validation failed: {e}")
 
             return consumer
 
@@ -422,11 +463,15 @@ class Kafka:
             admin_client = AdminClient(admin_config)
 
             if validate_connection:
-                # Test connection by getting cluster metadata
-                metadata = admin_client.list_topics(timeout=5)
-                logger.info(
-                    f"Admin client connected to Kafka cluster with {len(metadata.brokers)} brokers"
-                )
+                # Test connection by getting cluster metadata (with shorter timeout)
+                try:
+                    metadata = admin_client.list_topics(timeout=2)  # Reduced timeout
+                    logger.debug(
+                        f"Admin client connected to Kafka cluster with {len(metadata.brokers)} brokers"
+                    )
+                except Exception as e:
+                    logger.error(f"Connection validation failed: {e}")
+                    raise KafkaException(f"Admin client connection validation failed: {e}")
 
             return admin_client
 
@@ -523,6 +568,8 @@ class KafkaClient:
         key_serializer: Optional[BaseSerializer] = None,
         value_serializer: Optional[BaseSerializer] = None,
         default_config: Optional[Dict] = None,
+        auto_flush: bool = False,  # New auto-flush option
+        auto_flush_interval: int = 100,  # Auto-flush after N messages
     ):
         """
         Initialize Kafka client with serializers
@@ -537,6 +584,9 @@ class KafkaClient:
         self.key_serializer = key_serializer or StringSerializer()
         self.value_serializer = value_serializer or JSONSerializer()
         self.default_config = default_config or {}
+        self.auto_flush = auto_flush
+        self.auto_flush_interval = auto_flush_interval
+        self._message_count = 0
 
         # Cache for clients
         self._producer = None
@@ -617,6 +667,13 @@ class KafkaClient:
 
             producer.produce(**produce_kwargs)
 
+            # Auto-flush if enabled
+            if self.auto_flush:
+                self._message_count += 1
+                if self._message_count >= self.auto_flush_interval:
+                    producer.flush()
+                    self._message_count = 0
+
         except Exception as e:
             logger.error(f"Failed to produce message to topic '{topic}': {e}")
             raise
@@ -695,6 +752,138 @@ class KafkaClient:
                     continue
 
         finally:
+            consumer.close()
+
+    def produce_batch(
+        self,
+        topic: str,
+        messages: List[Dict[str, Any]],
+        flush_after_batch: bool = True,
+    ) -> None:
+        """
+        Produce multiple messages in batch for better performance
+
+        Args:
+            topic: Topic to produce to
+            messages: List of message dicts with keys: 'value', 'key' (optional), 'partition' (optional), 'headers' (optional)
+            flush_after_batch: Whether to flush after sending all messages
+        """
+        producer = self.get_producer()
+
+        try:
+            for msg in messages:
+                value = msg.get('value')
+                key = msg.get('key')
+                partition = msg.get('partition')
+                headers = msg.get('headers')
+
+                # Use the existing produce method without auto-flush
+                original_auto_flush = self.auto_flush
+                self.auto_flush = False  # Disable auto-flush for batch
+
+                self.produce(
+                    topic=topic,
+                    value=value,
+                    key=key,
+                    partition=partition,
+                    headers=headers
+                )
+
+                self.auto_flush = original_auto_flush  # Restore setting
+
+            if flush_after_batch:
+                producer.flush()
+
+        except Exception as e:
+            logger.error(f"Failed to produce batch messages to topic '{topic}': {e}")
+            raise
+
+    def consume_batch(
+        self,
+        topics: Union[List[str], str],
+        group_id: str,
+        batch_size: int = 100,
+        timeout_per_batch: float = 5.0,
+        config: Optional[Dict] = None,
+    ):
+        """
+        Consume messages in batches for better performance
+
+        Args:
+            topics: Topic(s) to consume from
+            group_id: Consumer group ID
+            batch_size: Number of messages per batch
+            timeout_per_batch: Timeout in seconds for collecting a batch
+            config: Additional consumer configuration
+
+        Yields:
+            List[dict]: Batch of deserialized messages
+        """
+        merged_config = {**self.default_config, **(config or {})}
+        consumer = Kafka.get_consumer(
+            self.bootstrap_servers, topics, group_id, merged_config
+        )
+
+        try:
+            batch = []
+            batch_start_time = time.time()
+
+            while True:
+                msg = consumer.poll(0.1)  # Short poll timeout
+
+                if msg is None:
+                    # Check if we should yield current batch due to timeout
+                    if batch and (time.time() - batch_start_time) >= timeout_per_batch:
+                        yield batch
+                        batch = []
+                        batch_start_time = time.time()
+                    continue
+
+                if msg.error():
+                    logger.error(f"Consumer error: {msg.error()}")
+                    continue
+
+                try:
+                    # Deserialize message
+                    value = None
+                    if msg.value() is not None:
+                        value = self.value_serializer.deserialize(msg.value())
+
+                    key = None
+                    if msg.key() is not None:
+                        key = self.key_serializer.deserialize(msg.key())
+
+                    headers = {}
+                    if msg.headers():
+                        headers = {
+                            k: v.decode("utf-8") if isinstance(v, bytes) else v
+                            for k, v in msg.headers()
+                        }
+
+                    batch.append({
+                        "topic": msg.topic(),
+                        "partition": msg.partition(),
+                        "offset": msg.offset(),
+                        "key": key,
+                        "value": value,
+                        "headers": headers,
+                        "timestamp": msg.timestamp(),
+                    })
+
+                    # Yield batch when it reaches desired size
+                    if len(batch) >= batch_size:
+                        yield batch
+                        batch = []
+                        batch_start_time = time.time()
+
+                except Exception as e:
+                    logger.error(f"Failed to deserialize message: {e}")
+                    continue
+
+        finally:
+            # Yield any remaining messages in the batch
+            if batch:
+                yield batch
             consumer.close()
 
     def flush(self, timeout: float = 10.0) -> int:

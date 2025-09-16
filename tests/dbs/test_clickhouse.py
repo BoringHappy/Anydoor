@@ -4,7 +4,7 @@ from anydoor.dbs import Clickhouse
 from tests.decorators import require_env
 
 
-@require_env("CLICKHOUSE_ENABLED", reason="Clickhouse is not enabled")
+@require_env("UNITTEST_CLICKHOUSE_ENABLED", reason="Clickhouse is not enabled")
 def test_to_sql():
     schema = "default"
     table = "test_unit"
