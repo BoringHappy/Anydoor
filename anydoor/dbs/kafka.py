@@ -318,7 +318,6 @@ class Kafka:
     def get_producer(
         bootstrap_servers: str,
         config: Optional[Dict] = None,
-        validate_connection: bool = True,
     ) -> Producer:
         """
         Create a Kafka producer with enhanced configuration and validation
@@ -326,7 +325,6 @@ class Kafka:
         Args:
             bootstrap_servers: Comma-separated list of Kafka brokers
             config: Additional producer configuration
-            validate_connection: Whether to validate connection on creation
 
         Returns:
             Producer: Configured Kafka producer
@@ -343,16 +341,15 @@ class Kafka:
         try:
             producer = Producer(producer_config)
 
-            if validate_connection:
-                # Test connection by getting cluster metadata (with shorter timeout)
-                try:
-                    metadata = producer.list_topics(timeout=2)  # Reduced timeout
-                    logger.debug(
-                        f"Connected to Kafka cluster with {len(metadata.brokers)} brokers"
-                    )
-                except Exception as e:
-                    logger.error(f"Connection validation failed: {e}")
-                    raise KafkaException(f"Producer connection validation failed: {e}")
+            # Test connection by getting cluster metadata (with shorter timeout)
+            try:
+                metadata = producer.list_topics(timeout=2)  # Reduced timeout
+                logger.debug(
+                    f"Connected to Kafka cluster with {len(metadata.brokers)} brokers"
+                )
+            except Exception as e:
+                logger.error(f"Connection validation failed: {e}")
+                raise KafkaException(f"Producer connection validation failed: {e}")
 
             return producer
 
@@ -369,7 +366,6 @@ class Kafka:
         topics: Union[List[str], str],
         group_id: str,
         config: Optional[Dict] = None,
-        validate_connection: bool = True,
     ) -> Consumer:
         """
         Create a Kafka consumer with enhanced configuration and validation
@@ -379,7 +375,6 @@ class Kafka:
             topics: Topic(s) to subscribe to
             group_id: Consumer group ID
             config: Additional consumer configuration
-            validate_connection: Whether to validate connection on creation
 
         Returns:
             Consumer: Configured Kafka consumer
@@ -410,17 +405,16 @@ class Kafka:
             consumer = Consumer(consumer_config)
             consumer.subscribe(topic_list)
 
-            if validate_connection:
-                # Test connection by getting cluster metadata (with shorter timeout)
-                try:
-                    metadata = consumer.list_topics(timeout=2)  # Reduced timeout
-                    logger.debug(
-                        f"Consumer connected to Kafka cluster with {len(metadata.brokers)} brokers"
-                    )
-                    logger.debug(f"Subscribed to topics: {topic_list}")
-                except Exception as e:
-                    logger.error(f"Connection validation failed: {e}")
-                    raise KafkaException(f"Consumer connection validation failed: {e}")
+            # Test connection by getting cluster metadata (with shorter timeout)
+            try:
+                metadata = consumer.list_topics(timeout=2)  # Reduced timeout
+                logger.debug(
+                    f"Consumer connected to Kafka cluster with {len(metadata.brokers)} brokers"
+                )
+                logger.debug(f"Subscribed to topics: {topic_list}")
+            except Exception as e:
+                logger.error(f"Connection validation failed: {e}")
+                raise KafkaException(f"Consumer connection validation failed: {e}")
 
             return consumer
 
@@ -435,7 +429,6 @@ class Kafka:
     def get_admin_client(
         bootstrap_servers: str,
         config: Optional[Dict] = None,
-        validate_connection: bool = True,
     ) -> AdminClient:
         """
         Create a Kafka admin client with enhanced configuration and validation
@@ -443,7 +436,6 @@ class Kafka:
         Args:
             bootstrap_servers: Comma-separated list of Kafka brokers
             config: Additional admin client configuration
-            validate_connection: Whether to validate connection on creation
 
         Returns:
             AdminClient: Configured Kafka admin client
@@ -462,18 +454,17 @@ class Kafka:
         try:
             admin_client = AdminClient(admin_config)
 
-            if validate_connection:
-                # Test connection by getting cluster metadata (with shorter timeout)
-                try:
-                    metadata = admin_client.list_topics(timeout=2)  # Reduced timeout
-                    logger.debug(
-                        f"Admin client connected to Kafka cluster with {len(metadata.brokers)} brokers"
-                    )
-                except Exception as e:
-                    logger.error(f"Connection validation failed: {e}")
-                    raise KafkaException(
-                        f"Admin client connection validation failed: {e}"
-                    )
+            # Test connection by getting cluster metadata (with shorter timeout)
+            try:
+                metadata = admin_client.list_topics(timeout=2)  # Reduced timeout
+                logger.debug(
+                    f"Admin client connected to Kafka cluster with {len(metadata.brokers)} brokers"
+                )
+            except Exception as e:
+                logger.error(f"Connection validation failed: {e}")
+                raise KafkaException(
+                    f"Admin client connection validation failed: {e}"
+                )
 
             return admin_client
 
