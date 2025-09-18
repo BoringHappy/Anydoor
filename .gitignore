@@ -164,3 +164,4 @@ poetry.lock# pixi environments
 *.egg-info
 .envrc
 pixi.lock
+.conversations
