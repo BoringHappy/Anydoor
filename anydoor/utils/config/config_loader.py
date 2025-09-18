@@ -13,7 +13,18 @@ from pydantic import BaseModel
 
 
 def register_datetime_resolvers() -> None:
-    """Register datetime resolvers: ${dt.now}, ${dt.add}, ${dt.sub}, ${dt.format}, ${dt.parse}."""
+    """
+    Register datetime resolvers for Hydra configuration.
+
+    Registers the following resolvers for dynamic datetime handling:
+    - ${dt.now}: Current datetime
+    - ${dt.add}: Add time to a base date
+    - ${dt.sub}: Subtract time from a base date
+    - ${dt.format}: Format datetime object
+    - ${dt.parse}: Parse datetime string
+
+    These resolvers enable dynamic date/time calculations in configuration files.
+    """
     # Register resolver for current datetime
     OmegaConf.register_new_resolver("dt.now", lambda: datetime.now(), replace=True)
 
@@ -49,7 +60,18 @@ def register_datetime_resolvers() -> None:
 
 
 def _parse_config_path(config_file: Union[str, Path]) -> tuple[str, str]:
-    """Parse config file path into (config_dir, config_name)."""
+    """
+    Parse config file path into directory and name components.
+
+    Args:
+        config_file (Union[str, Path]): Path to configuration file
+
+    Returns:
+        tuple[str, str]: (config_dir, config_name) tuple
+
+    Raises:
+        FileNotFoundError: If configuration file doesn't exist
+    """
     config_path = Path(str(config_file))
 
     if not config_path.exists():
@@ -62,7 +84,14 @@ def _parse_config_path(config_file: Union[str, Path]) -> tuple[str, str]:
 
 
 def _setup_hydra_environment() -> None:
-    """Setup Hydra environment: cleanup, register resolvers, set run_time."""
+    """
+    Setup Hydra environment with cleanup and resolver registration.
+
+    Performs the following setup tasks:
+    1. Clears existing Hydra instance if initialized
+    2. Registers datetime resolvers
+    3. Sets up runtime environment
+    """
     if GlobalHydra.instance().is_initialized():
         GlobalHydra.instance().clear()
 
@@ -78,7 +107,31 @@ def load_hydra_config(
     pydantic_model: Optional[Type[BaseModel]] = None,
     pydantic_model_config: Optional[dict] = None,
 ) -> Union[DictConfig, BaseModel]:
-    """Load Hydra configuration with datetime resolvers."""
+    """
+    Load Hydra configuration with datetime resolvers and validation.
+
+    This function provides a comprehensive configuration loading system with:
+    - Dynamic datetime resolvers for time-based configurations
+    - Command-line override support
+    - Pydantic model validation
+    - Flexible output formats
+
+    Args:
+        config_dir (Optional[Union[str, Path]]): Configuration directory path
+        config_name (Optional[str]): Configuration file name (without extension)
+        config_file (Optional[Union[str, Path]]): Full path to configuration file
+        overrides (Optional[List[str]]): List of configuration overrides in "key=value" format
+        to_dict (bool): If True, return configuration as dictionary instead of DictConfig
+        pydantic_model (Optional[Type[BaseModel]]): Pydantic model for validation
+        pydantic_model_config (Optional[dict]): Additional Pydantic model configuration
+
+    Returns:
+        Union[DictConfig, BaseModel]: Loaded configuration object
+
+    Note:
+        Either (config_dir, config_name) or config_file must be provided.
+        Overrides support nested keys using dot notation (e.g., "database.host=localhost").
+    """
 
     if config_file:
         config_dir, config_name = _parse_config_path(config_file)
@@ -107,7 +160,28 @@ def load_config(
     pydantic_model: Optional[Type[BaseModel]] = None,
     pydantic_model_config: Optional[dict] = None,
 ) -> Union[DictConfig, BaseModel]:
-    """Load config from command-line args. Supports --config-file, --override."""
+    """
+    Load configuration from command-line arguments with Hydra integration.
+
+    This function automatically parses command-line arguments and loads configuration
+    using Hydra. It expects the following command-line arguments:
+    - --config-file: Path to the YAML configuration file (required)
+    - --override: Configuration overrides in "key=value" format (optional, multiple allowed)
+
+    Args:
+        to_dict (bool): If True, return configuration as dictionary instead of DictConfig
+        pydantic_model (Optional[Type[BaseModel]]): Pydantic model for validation
+        pydantic_model_config (Optional[dict]): Additional Pydantic model configuration
+
+    Returns:
+        Union[DictConfig, BaseModel]: Loaded configuration object
+
+    Raises:
+        SystemExit: If required command-line arguments are missing
+
+    Example:
+        python script.py --config-file config/app.yaml --override database.host=localhost --override debug=true
+    """
     # Set up command-line argument parser
     parser = argparse.ArgumentParser(
         description="Configuration loader with Hydra and datetime support"

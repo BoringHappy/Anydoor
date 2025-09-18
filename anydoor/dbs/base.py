@@ -13,6 +13,23 @@ from ..utils.vault import Secret, Vault
 
 
 class BaseDB:
+    """
+    Base database class providing common functionality for all database implementations.
+
+    This class serves as the foundation for database operations, providing:
+    - Automatic schema management and table creation
+    - Type mapping between pandas DataFrames and database types
+    - Conflict resolution strategies for data insertion
+    - Audit trail functionality with automatic ID and timestamp columns
+    - Connection management through SQLAlchemy engines
+
+    Attributes:
+        DB_TYPE (str): Database type identifier (e.g., 'postgres', 'clickhouse')
+        default_schema (str): Default schema name for the database
+        on_conflicts (list): Available conflict resolution strategies
+        default_secret_name (str): Default secret name in Vault for credentials
+    """
+
     DB_TYPE = None
     default_schema = None
     on_conflicts = ["replace", "ignore"]
@@ -27,6 +44,21 @@ class BaseDB:
         engine: Engine = None,
         create_engine_options: dict = None,
     ):
+        """
+        Initialize database connection.
+
+        Args:
+            database (str): Name of the database to connect to
+            secret (Secret, optional): Vault secret object containing credentials
+            secret_name (str, optional): Name of the secret in Vault to retrieve
+            schema (str, optional): Database schema name (uses default_schema if not provided)
+            engine (Engine, optional): Existing SQLAlchemy engine to reuse
+            create_engine_options (dict, optional): Additional options for engine creation
+
+        Note:
+            Either 'secret' or 'secret_name' must be provided unless 'engine' is specified.
+            The secret should contain: host, port, user, password
+        """
         self.database = database
         self.schema = schema or self.default_schema
         if isinstance(engine, Engine):
@@ -49,13 +81,41 @@ class BaseDB:
 
     @classmethod
     def add_audit(cls, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Add audit trail columns to DataFrame.
+
+        Adds '_id' (UUID) and '_update_time' (current timestamp) columns to track
+        data lineage and modification times.
+
+        Args:
+            df (pd.DataFrame): Input DataFrame
+
+        Returns:
+            pd.DataFrame: DataFrame with added audit columns
+        """
         df["_id"] = df.iloc[:, 0].apply(lambda x: str(uuid1()))
         df["_update_time"] = datetime.now()
         return df
 
     @classmethod
     def mapping_df_types(cls, df: pd.DataFrame, dtype: dict = None) -> dict:
-        """pandas to_sql type convert"""
+        """
+        Map pandas DataFrame column types to SQLAlchemy types.
+
+        Automatically converts pandas dtypes to appropriate SQLAlchemy types:
+        - float types -> Float(53)
+        - int types -> BIGINT()
+        - datetime types -> DateTime()
+        - date types -> Date()
+        - string types -> String with calculated length
+
+        Args:
+            df (pd.DataFrame): DataFrame to analyze
+            dtype (dict, optional): Predefined type mappings
+
+        Returns:
+            dict: Column name to SQLAlchemy type mapping
+        """
         dtype = dtype or dict()
         for col, col_type in zip(df.columns, df.dtypes):
             if col not in dtype.keys():
@@ -72,6 +132,19 @@ class BaseDB:
         return dtype
 
     def execute(self, sql: str, return_pandas=True) -> Optional[pd.DataFrame]:
+        """
+        Execute SQL query against the database.
+
+        Args:
+            sql (str): SQL query string
+            return_pandas (bool): If True, return pandas DataFrame for SELECT queries
+
+        Returns:
+            Optional[pd.DataFrame]: Query results as DataFrame, or None for non-SELECT queries
+
+        Raises:
+            ProgrammingError: If query fails due to syntax or permission issues
+        """
         if isinstance(sql, str):
             sql = text(sql)
         if "select" in str(sql).lower():
@@ -86,6 +159,19 @@ class BaseDB:
                 conn.commit()
 
     def fetch_one(self, sql: str, default=None) -> dict:
+        """
+        Fetch a single row from database query.
+
+        Args:
+            sql (str): SQL query string
+            default: Default value to return if no results or table doesn't exist
+
+        Returns:
+            dict: First row as dictionary, or default value if no results
+
+        Note:
+            Returns default value if table doesn't exist (handles ProgrammingError gracefully)
+        """
         try:
             return self.execute(sql).iloc[0].to_dict()
         except ProgrammingError as e:
@@ -220,6 +306,27 @@ class BaseDB:
         primary_keys: List[str] = None,
         on_conflict: str = "replace",
     ):
+        """
+        Store DataFrame in database with automatic schema management.
+
+        This method handles the complete data storage workflow:
+        1. Ensures table exists with proper schema
+        2. Checks and adds missing columns
+        3. Validates and adjusts column lengths
+        4. Handles conflicts during insertion
+
+        Args:
+            df (pd.DataFrame): Data to store
+            table (str): Target table name (converted to lowercase)
+            schema (str, optional): Schema name (uses default_schema if not provided)
+            dtype (dict, optional): Column type mappings
+            primary_keys (List[str], optional): Primary key columns
+            on_conflict (str): Conflict resolution strategy ("replace" or "ignore")
+
+        Raises:
+            IntegrityError: If conflict resolution fails
+            Exception: For other database errors
+        """
         table = table.lower()
         dtypes = self.mapping_df_types(df, dtype)
         schema = schema or self.default_schema

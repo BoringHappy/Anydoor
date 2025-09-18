@@ -15,28 +15,77 @@ from loguru import logger
 
 
 class BaseSerializer(ABC):
-    """Base class for Kafka message serializers"""
+    """
+    Abstract base class for Kafka message serializers.
+
+    Defines the interface that all serializers must implement for
+    converting Python objects to/from bytes for Kafka message transmission.
+    """
 
     @abstractmethod
     def serialize(self, data: Any) -> bytes:
-        """Serialize data to bytes"""
+        """
+        Serialize data to bytes for Kafka transmission.
+
+        Args:
+            data (Any): Data to serialize
+
+        Returns:
+            bytes: Serialized data
+        """
         pass
 
     @abstractmethod
     def deserialize(self, data: bytes) -> Any:
-        """Deserialize bytes to data"""
+        """
+        Deserialize bytes back to original data.
+
+        Args:
+            data (bytes): Serialized data
+
+        Returns:
+            Any: Deserialized data
+        """
         pass
 
 
 class JSONSerializer(BaseSerializer):
-    """JSON serializer for Kafka messages with orjson optimization"""
+    """
+    JSON serializer for Kafka messages with orjson optimization.
+
+    Provides fast JSON serialization/deserialization using orjson when available,
+    with fallback to standard json library. Optimized for performance and
+    handles various Python data types efficiently.
+
+    Attributes:
+        encoding (str): Text encoding for string operations
+        use_orjson (bool): Whether to use orjson for better performance
+    """
 
     def __init__(self, encoding: str = "utf-8", use_orjson: bool = True):
+        """
+        Initialize JSON serializer.
+
+        Args:
+            encoding (str): Text encoding for string operations
+            use_orjson (bool): Whether to use orjson for better performance
+        """
         self.encoding = encoding
         self.use_orjson = use_orjson
 
     def serialize(self, data: Any) -> bytes:
-        """Serialize data to JSON bytes"""
+        """
+        Serialize data to JSON bytes.
+
+        Args:
+            data (Any): Data to serialize to JSON
+
+        Returns:
+            bytes: JSON-encoded data
+
+        Raises:
+            ValueError: If serialization fails
+        """
         try:
             if self.use_orjson:
                 return orjson.dumps(data)
@@ -47,7 +96,18 @@ class JSONSerializer(BaseSerializer):
             raise ValueError(f"Failed to serialize data to JSON: {e}")
 
     def deserialize(self, data: bytes) -> Any:
-        """Deserialize JSON bytes to data"""
+        """
+        Deserialize JSON bytes to data.
+
+        Args:
+            data (bytes): JSON-encoded data
+
+        Returns:
+            Any: Deserialized data
+
+        Raises:
+            ValueError: If deserialization fails
+        """
         try:
             if self.use_orjson:
                 return orjson.loads(data)
@@ -462,9 +522,7 @@ class Kafka:
                 )
             except Exception as e:
                 logger.error(f"Connection validation failed: {e}")
-                raise KafkaException(
-                    f"Admin client connection validation failed: {e}"
-                )
+                raise KafkaException(f"Admin client connection validation failed: {e}")
 
             return admin_client
 
@@ -508,51 +566,26 @@ class Kafka:
 
 class KafkaClient:
     """
-    High-level Kafka client with built-in serialization support
+    High-level Kafka client with built-in serialization support.
 
     This client provides automatic serialization/deserialization of messages,
-    making it easy to work with structured data in Kafka.
+    making it easy to work with structured data in Kafka. It handles all the
+    complexity of message serialization, connection management, and error handling.
 
-    Example:
-        ```python
-        # Basic usage with JSON serialization
-        client = KafkaClient(
-            bootstrap_servers="localhost:9092",
-            key_serializer=StringSerializer(),
-            value_serializer=JSONSerializer()
-        )
+    Features:
+    - Automatic serialization/deserialization
+    - Built-in retry and error handling
+    - Batch operations for better performance
+    - Context managers for resource cleanup
+    - Support for multiple serialization formats (JSON, Avro, String, Bytes)
 
-        # 自动序列化发送
-        client.produce("topic", {"message": "data"}, key="key1")
-
-        # 自动反序列化消费
-        for msg in client.consume(["topic"], "group"):
-            print(msg['value'])  # 已反序列化的Python对象
-
-        # Advanced usage with Pydantic Avro models
-        from pydantic_avro import AvroBase
-
-        class User(AvroBase):
-            id: int
-            name: str
-            email: str
-            age: Optional[int] = None
-
-        avro_client = KafkaClient(
-            bootstrap_servers="localhost:9092",
-            key_serializer=StringSerializer(),
-            value_serializer=PydanticAvroSerializer(User)
-        )
-
-        # 发送类型安全的模型
-        user = User(id=1, name="张三", email="test@example.com", age=25)
-        avro_client.produce("users", user, key=f"user_{user.id}")
-
-        # 接收类型安全的模型
-        for msg in avro_client.consume(["users"], "user-group"):
-            user_obj = msg['value']  # User类型的实例
-            print(f"用户: {user_obj.name}, 邮箱: {user_obj.email}")
-        ```
+    Attributes:
+        bootstrap_servers (str): Comma-separated list of Kafka brokers
+        key_serializer (BaseSerializer): Serializer for message keys
+        value_serializer (BaseSerializer): Serializer for message values
+        default_config (dict): Default configuration for producers/consumers
+        auto_flush (bool): Whether to automatically flush after messages
+        auto_flush_interval (int): Number of messages before auto-flush
     """
 
     def __init__(
@@ -565,13 +598,15 @@ class KafkaClient:
         auto_flush_interval: int = 100,  # Auto-flush after N messages
     ):
         """
-        Initialize Kafka client with serializers
+        Initialize Kafka client with serializers.
 
         Args:
-            bootstrap_servers: Comma-separated list of Kafka brokers
-            key_serializer: Serializer for message keys
-            value_serializer: Serializer for message values
-            default_config: Default configuration for producers/consumers
+            bootstrap_servers (str): Comma-separated list of Kafka brokers
+            key_serializer (BaseSerializer, optional): Serializer for message keys
+            value_serializer (BaseSerializer, optional): Serializer for message values
+            default_config (dict, optional): Default configuration for producers/consumers
+            auto_flush (bool): Whether to automatically flush after messages
+            auto_flush_interval (int): Number of messages before auto-flush
         """
         self.bootstrap_servers = bootstrap_servers
         self.key_serializer = key_serializer or StringSerializer()

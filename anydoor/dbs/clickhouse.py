@@ -12,16 +12,53 @@ from .base import BaseDB
 
 
 class Clickhouse(BaseDB):
+    """
+    ClickHouse database implementation optimized for analytics workloads.
+
+    ClickHouse is a columnar database designed for OLAP (Online Analytical Processing)
+    with excellent performance for time-series and analytical queries.
+
+    Features:
+    - Partition support for large datasets
+    - MergeTree engine configuration
+    - Optimized for time-series data
+    - Immutable schema (no modifications after creation)
+
+    Attributes:
+        DB_TYPE (str): Set to "clickhouse"
+        default_schema (str): Set to "default"
+        default_secret_name (str): Set to "clickhouse"
+    """
+
     DB_TYPE = "clickhouse"
     default_schema = "default"
     default_secret_name = "clickhouse"
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize ClickHouse connection.
+
+        Note:
+            ClickHouse uses database name as schema, so schema is set to database name.
+        """
         super().__init__(*args, **kwargs)
         self.schema = self.database
 
     @classmethod
     def create_engine(cls, secret: Secret, database, schema, *args, **kwargs) -> Engine:
+        """
+        Create ClickHouse SQLAlchemy engine.
+
+        Args:
+            secret (Secret): Database credentials containing host, port, user, password
+            database (str): Database name
+            schema (str): Schema name (unused in ClickHouse)
+            *args: Additional positional arguments
+            **kwargs: Additional engine options
+
+        Returns:
+            Engine: Configured SQLAlchemy engine for ClickHouse
+        """
         engine = create_engine(
             f"clickhouse+native://{secret.user}:{secret.password}@{secret.host}:{secret.port}/{database}",
             **kwargs,
@@ -34,6 +71,17 @@ class Clickhouse(BaseDB):
         table: str,
         schema: str = None,
     ):
+        """
+        Store DataFrame in ClickHouse with simplified interface.
+
+        ClickHouse doesn't support complex schema modifications, so this method
+        provides a streamlined data insertion process.
+
+        Args:
+            df (pd.DataFrame): Data to store
+            table (str): Target table name (converted to lowercase)
+            schema (str, optional): Schema name (uses database name if not provided)
+        """
         table = table.lower()
         schema = schema or self.schema
 
@@ -56,6 +104,20 @@ class Clickhouse(BaseDB):
         partition_keys: list = None,
         ck_engine: str = None,
     ):
+        """
+        Create ClickHouse table with partitioning support.
+
+        Creates a ClickHouse table using the MergeTree engine with optional partitioning.
+        This is the recommended approach for ClickHouse table creation.
+
+        Args:
+            table (str): Table name
+            schema (str): Schema name
+            dtype (dict): Column type definitions
+            primary_keys (list, optional): Primary key columns
+            partition_keys (list, optional): Partition key columns for data distribution
+            ck_engine (str, optional): ClickHouse engine type (defaults to MergeTree)
+        """
         if not self.is_table_exists(schema=schema, table=table):
             sql = f"""
                 CREATE TABLE IF NOT EXISTS {schema or self.schema}.{table} 
@@ -70,17 +132,40 @@ class Clickhouse(BaseDB):
 
     @classmethod
     def get_df_dtypes(cls, df: pd.DataFrame) -> dict:
-        """Get dtypes of a dataframe"""
+        """
+        Get ClickHouse-compatible data types for DataFrame columns.
+
+        Args:
+            df (pd.DataFrame): DataFrame to analyze
+
+        Returns:
+            dict: Column name to ClickHouse type mapping
+        """
         return {k: cls.get_dtype(v) for k, v in df.dtypes.to_dict().items()}
 
     @classmethod
     def get_dtype(cls, dtype: str) -> str:
         """
-        将 Pandas dtype 转换为 ClickHouse type
+        Convert pandas dtype to ClickHouse type.
+
+        Maps pandas data types to their ClickHouse equivalents:
+        - object -> String
+        - int* -> Int*
+        - uint* -> UInt*
+        - float* -> Float*
+        - bool -> UInt8
+        - datetime* -> DateTime
+        - timedelta -> Int64
+        - category -> String
+
         Args:
-            dtype (str): Pandas dtype
+            dtype (str): Pandas dtype string
+
         Returns:
-            str: ClickHouse type
+            str: ClickHouse type string
+
+        Raises:
+            ValueError: If dtype is not supported
         """
         dtype = str(dtype)
         if dtype == "object":
