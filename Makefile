@@ -11,22 +11,23 @@ install-dev:
 	uv sync --all-extras --group dev
 
 test:
-	pytest tests/ -v
+	uv sync --all-extras --group dev
+	uv run pytest tests/ -v
 
 lint:
-	ruff check anydoor/
+	uv run ruff check anydoor/
 
 mypy:
-	mypy anydoor/
+	uv run mypy anydoor/
 
 mypy-strict:
-	mypy anydoor/ --strict
+	uv run mypy anydoor/ --strict
 
 mypy-install-stubs:
-	mypy --install-types
+	uv run mypy --install-types
 
 format:
-	ruff format anydoor/
+	uv run ruff format anydoor/
 
 build:
 	uv build

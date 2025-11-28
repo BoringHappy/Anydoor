@@ -33,7 +33,7 @@ jobs:
           ${{ runner.os }}-uv-lint-
     
     - name: Install dependencies
-      run: uv sync
+      run: uv sync --all-extras
     
     - name: Run ruff linting
       run: uv run ruff check anydoor/
