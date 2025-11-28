@@ -9,7 +9,7 @@ from clickhouse_connect.driver.client import Client
 from sqlalchemy import Engine, create_engine
 
 from ..utils import logger
-from ..utils.vault import Secret, Vault
+from ..utils.vault import Secret
 from .base import BaseDB
 
 

@@ -100,16 +100,12 @@ version = "0.2.9"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
-    { name = "avro-python3" },
     { name = "boto3" },
     { name = "bs4" },
     { name = "clickhouse-connect" },
     { name = "clickhouse-sqlalchemy" },
     { name = "cloudpathlib" },
-    { name = "confluent-kafka" },
     { name = "dateparser" },
-    { name = "deltalake" },
-    { name = "fastavro" },
     { name = "func-timeout" },
     { name = "hatchling" },
     { name = "hvac" },
@@ -121,16 +117,32 @@ dependencies = [
     { name = "numpy" },
     { name = "orjson" },
     { name = "pandas" },
-    { name = "polars" },
     { name = "psycopg2-binary" },
     { name = "pyarrow" },
     { name = "pydantic" },
-    { name = "pydantic-avro" },
     { name = "redis" },
     { name = "requests" },
     { name = "sqlalchemy" },
     { name = "tenacity" },
     { name = "tqdm" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "confluent-kafka" },
+    { name = "deltalake" },
+    { name = "fastavro" },
+    { name = "polars" },
+    { name = "pydantic-avro" },
+]
+kafka = [
+    { name = "confluent-kafka" },
+    { name = "fastavro" },
+    { name = "pydantic-avro" },
+]
+polars = [
+    { name = "deltalake" },
+    { name = "polars" },
 ]
 
 [package.dev-dependencies]
@@ -147,16 +159,18 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.12.0" },
-    { name = "avro-python3", specifier = ">=1.10.2" },
     { name = "boto3", specifier = ">=1.37.16" },
     { name = "bs4", specifier = ">=0.0.2" },
     { name = "clickhouse-connect", specifier = ">=0.8.14" },
     { name = "clickhouse-sqlalchemy", specifier = ">=0.3.2" },
     { name = "cloudpathlib", specifier = ">=0.21.0" },
-    { name = "confluent-kafka", specifier = ">=2.8.2" },
+    { name = "confluent-kafka", marker = "extra == 'all'", specifier = ">=2.8.2" },
+    { name = "confluent-kafka", marker = "extra == 'kafka'", specifier = ">=2.8.2" },
     { name = "dateparser", specifier = ">=1.2.2" },
-    { name = "deltalake", specifier = ">=0.25.4" },
-    { name = "fastavro", specifier = ">=1.12.0" },
+    { name = "deltalake", marker = "extra == 'all'", specifier = ">=0.25.4" },
+    { name = "deltalake", marker = "extra == 'polars'", specifier = ">=0.25.4" },
+    { name = "fastavro", marker = "extra == 'all'", specifier = ">=1.12.0" },
+    { name = "fastavro", marker = "extra == 'kafka'", specifier = ">=1.12.0" },
     { name = "func-timeout", specifier = ">=4.3.5" },
     { name = "hatchling", specifier = ">=1.27.0" },
     { name = "hvac", specifier = ">=2.3.0" },
@@ -168,17 +182,20 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.2.4" },
     { name = "orjson", specifier = ">=3.11.3" },
     { name = "pandas", specifier = ">=2.2.2" },
-    { name = "polars", specifier = ">=1.24.0" },
+    { name = "polars", marker = "extra == 'all'", specifier = ">=1.24.0" },
+    { name = "polars", marker = "extra == 'polars'", specifier = ">=1.24.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.9" },
     { name = "pyarrow", specifier = ">=21.0.0" },
     { name = "pydantic", specifier = ">=2.11.7" },
-    { name = "pydantic-avro", specifier = ">=0.9.0" },
+    { name = "pydantic-avro", marker = "extra == 'all'", specifier = ">=0.9.0" },
+    { name = "pydantic-avro", marker = "extra == 'kafka'", specifier = ">=0.9.0" },
     { name = "redis", specifier = ">=5.2.1" },
     { name = "requests", specifier = ">=2.32.4" },
     { name = "sqlalchemy", specifier = ">=2.0.39" },
     { name = "tenacity", specifier = ">=9.0.0" },
     { name = "tqdm", specifier = ">=4.67.1" },
 ]
+provides-extras = ["polars", "kafka", "all"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -250,12 +267,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/5a/b0/1367933a8532ee6ff
 wheels = [
     { url = "https://files.pythonhosted.org/packages/77/06/bb80f5f86020c4551da315d78b3ab75e8228f89f0162f2c3a819e407941a/attrs-25.3.0-py3-none-any.whl", hash = "sha256:427318ce031701fea540783410126f03899a97ffc6f61596ad581ac2e40e3bc3", size = 63815, upload-time = "2025-03-13T11:10:21.14Z" },
 ]
-
-[[package]]
-name = "avro-python3"
-version = "1.10.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/cc/97/7a6970380ca8db9139a3cc0b0e3e0dd3e4bc584fb3644e1d06e71e1a55f0/avro-python3-1.10.2.tar.gz", hash = "sha256:3b63f24e6b04368c3e4a6f923f484be0230d821aad65ac36108edbff29e9aaab", size = 38701, upload-time = "2021-03-17T10:43:56.97Z" }
 
 [[package]]
 name = "beautifulsoup4"

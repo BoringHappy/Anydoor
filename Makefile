@@ -4,6 +4,12 @@ bump:
 install:
 	uv sync
 
+install-all:
+	uv sync --all-extras
+
+install-dev:
+	uv sync --all-extras --group dev
+
 test:
 	pytest tests/ -v
 
