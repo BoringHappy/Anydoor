@@ -6,7 +6,7 @@ from .sqlite import Sqlite
 
 # Optional: Kafka ecosystem (requires 'kafka' extra)
 try:
-    from .kafka import (
+    from .kafka import (  # noqa: F401
         AvroSerializer,
         BaseSerializer,
         BytesSerializer,
@@ -23,7 +23,7 @@ except ImportError:
 
 # Optional: Delta Lake (requires 'polars' extra which includes deltalake)
 try:
-    from .delta import Delta
+    from .delta import Delta  # noqa: F401
 
     _has_delta = True
 except ImportError:
