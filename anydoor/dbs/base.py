@@ -61,14 +61,15 @@ class BaseDB:
         """
         self.database = database
         self.schema = schema or self.default_schema
+        self.secret = secret or Vault().get(secret_name or self.default_secret_name)
+
         if isinstance(engine, Engine):
             self.engine = engine
         else:
-            secret = secret or Vault().get(secret_name or self.default_secret_name)
             create_engine_options = create_engine_options or dict()
 
             self.engine = self.create_engine(
-                secret=secret,
+                secret=self.secret,
                 database=self.database,
                 schema=self.schema,
                 **create_engine_options,

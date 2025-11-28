@@ -3,11 +3,13 @@
 ClickHouse database connection and operations
 """
 
+import clickhouse_connect
 import pandas as pd
+from clickhouse_connect.driver.client import Client
 from sqlalchemy import Engine, create_engine
 
 from ..utils import logger
-from ..utils.vault import Secret
+from ..utils.vault import Secret, Vault
 from .base import BaseDB
 
 
@@ -34,15 +36,36 @@ class Clickhouse(BaseDB):
     default_schema = "default"
     default_secret_name = "clickhouse"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, secret: Secret = None, secret_name: str = None, *args, **kwargs):
         """
         Initialize ClickHouse connection.
 
         Note:
             ClickHouse uses database name as schema, so schema is set to database name.
         """
+        # Store secret for clickhouse-connect client
         super().__init__(*args, **kwargs)
         self.schema = self.database
+        # Create clickhouse-connect client for native operations
+        self._client: Client = None
+
+    @property
+    def client(self) -> Client:
+        """
+        Get or create clickhouse-connect client for native operations.
+
+        Returns:
+            Client: ClickHouse native client
+        """
+        if self._client is None:
+            self._client = clickhouse_connect.get_client(
+                host=self.secret.host,
+                port=self.secret.connect_port,
+                username=self.secret.user,
+                password=self.secret.password,
+                database=self.database,
+            )
+        return self._client
 
     @classmethod
     def create_engine(cls, secret: Secret, database, schema, *args, **kwargs) -> Engine:
@@ -65,6 +88,12 @@ class Clickhouse(BaseDB):
         )
         return engine
 
+    def execute(self, sql: str, return_pandas=True) -> pd.DataFrame | None:
+        if return_pandas and sql.lower().strip().startswith("select"):
+            return self.client.query_df(sql)
+        else:
+            self.client.command(sql)
+
     def to_sql(
         self,
         df: pd.DataFrame,
@@ -72,10 +101,11 @@ class Clickhouse(BaseDB):
         schema: str = None,
     ):
         """
-        Store DataFrame in ClickHouse with simplified interface.
+        Store DataFrame in ClickHouse using clickhouse-connect's native insert.
 
         ClickHouse doesn't support complex schema modifications, so this method
-        provides a streamlined data insertion process.
+        provides a streamlined data insertion process using the native protocol
+        for better performance.
 
         Args:
             df (pd.DataFrame): Data to store
@@ -85,15 +115,12 @@ class Clickhouse(BaseDB):
         table = table.lower()
         schema = schema or self.schema
 
-        to_sql_parameters = {
-            "name": table,
-            "schema": schema,
-            "con": self.engine,
-            "index": False,
-            "if_exists": "append",
-            "chunksize": 1000,
-        }
-        df.to_sql(**to_sql_parameters)
+        # Use clickhouse-connect's insert_df for native protocol performance
+        self.client.insert_df(
+            table=table,
+            df=df,
+            database=schema,
+        )
 
     def ensure_table(
         self,
@@ -196,5 +223,5 @@ class Clickhouse(BaseDB):
     def change_column(self, *args, **kwargs):
         raise AttributeError("No column change allowed in clickhouse")
 
-    def truncate(self, *args, **kwargs):
-        raise AttributeError("No truncate allowed in clickhouse")
+    def truncate(self, table: str, schema: str):
+        self.client.command(f"TRUNCATE TABLE {schema}.{table}")

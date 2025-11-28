@@ -1,7 +1,7 @@
 [project]
 authors = [{ name = "veinkr", email = "veinkr.finch@gmail.com" }]
 name = "anydoor"
-version = "0.2.8"
+version = "0.2.9"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,6 +12,7 @@ dependencies = [
     "avro-python3>=1.10.2",
     "boto3>=1.37.16",
     "bs4>=0.0.2",
+    "clickhouse-connect>=0.8.14",
     "clickhouse-sqlalchemy>=0.3.2",
     "cloudpathlib>=0.21.0",
     "confluent-kafka>=2.8.2",

@@ -7,7 +7,7 @@ from tests.decorators import require_env
 @require_env("UNITTEST_CLICKHOUSE_ENABLED", reason="Clickhouse is not enabled")
 def test_to_sql():
     schema = "default"
-    table = "test_unit"
+    table = "anydoor_test_unit"
     ck = Clickhouse(database="default", schema=schema, secret_name="clickhouse")
     ck.execute(f"drop table if exists {schema}.{table}")
 
