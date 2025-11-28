@@ -64,7 +64,7 @@ jobs:
           ${{ runner.os }}-uv-format-
     
     - name: Install dependencies
-      run: uv sync
+      run: uv sync --all-extras
     
     - name: Check code formatting
       run: uv run ruff format --check anydoor/
@@ -95,7 +95,7 @@ jobs:
           ${{ runner.os }}-uv-test-
     
     - name: Install dependencies
-      run: uv sync
+      run: uv sync  --all-extras
     
     - name: Run tests with coverage
       run: uv run pytest tests/ -v --cov=anydoor --cov-report=term-missing --cov-report=xml
